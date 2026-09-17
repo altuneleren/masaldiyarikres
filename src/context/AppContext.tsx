@@ -10,6 +10,9 @@ import {
   RegistrationApplication,
   Announcement,
   MealMenuItem,
+  Teacher,
+  MonthlyDue,
+  DuePaymentStatus,
 } from "../types";
 import {
   INITIAL_CLASSES,
@@ -20,6 +23,8 @@ import {
   INITIAL_MENU,
   INITIAL_ANNOUNCEMENTS,
   INITIAL_APPLICATIONS,
+  INITIAL_TEACHERS,
+  INITIAL_DUES,
 } from "../lib/initialData";
 
 interface AppContextType {
@@ -33,6 +38,9 @@ interface AppContextType {
   applications: RegistrationApplication[];
   isAdminLoggedIn: boolean;
   loggedInStudent: Student | null;
+  teachers: Teacher[];
+  monthlyDues: MonthlyDue[];
+  loggedInTeacher: Teacher | null;
 
   // Admin Auth
   loginAdmin: (user: string, pass: string) => boolean;
@@ -41,6 +49,25 @@ interface AppContextType {
   // Veli / Student (e-okul) Auth
   loginStudent: (username: string, pass: string) => Student | null;
   logoutStudent: () => void;
+
+  // Teacher Auth
+  loginTeacher: (user: string, pass: string) => Teacher | null;
+  logoutTeacher: () => void;
+  updateTeacherCredentials: (teacherId: string, username: string, pass: string) => void;
+
+  // Monthly Dues / Accounting Actions
+  updateDueStatus: (
+    dueId: string,
+    status: DuePaymentStatus,
+    details?: {
+      paidDate?: string;
+      paymentMethod?: "Havale / EFT" | "Kredi Kartı" | "Nakit";
+      receiptNo?: string;
+      notes?: string;
+      amount?: number;
+    }
+  ) => void;
+  getDuesForStudent: (studentId: string) => MonthlyDue[];
 
   // Student Actions
   addStudent: (student: Omit<Student, "id">) => void;
@@ -87,6 +114,9 @@ const STORAGE_KEYS = {
   APPLICATIONS: "masal_applications_v1",
   ADMIN_AUTH: "masal_admin_auth_v1",
   STUDENT_AUTH: "masal_student_auth_v1",
+  TEACHERS: "masal_teachers_v1",
+  DUES: "masal_dues_v1",
+  TEACHER_AUTH: "masal_teacher_auth_v1",
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -100,6 +130,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [applications, setApplications] = useState<RegistrationApplication[]>(INITIAL_APPLICATIONS);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
   const [loggedInStudent, setLoggedInStudent] = useState<Student | null>(null);
+  const [teachers, setTeachers] = useState<Teacher[]>(INITIAL_TEACHERS);
+  const [monthlyDues, setMonthlyDues] = useState<MonthlyDue[]>(INITIAL_DUES);
+  const [loggedInTeacher, setLoggedInTeacher] = useState<Teacher | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Load from LocalStorage on mount
@@ -137,6 +170,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const storedApplications = localStorage.getItem(STORAGE_KEYS.APPLICATIONS);
       if (storedApplications) setApplications(JSON.parse(storedApplications));
 
+      const storedTeachers = localStorage.getItem(STORAGE_KEYS.TEACHERS);
+      if (storedTeachers) {
+        setTeachers(JSON.parse(storedTeachers));
+      } else {
+        setTeachers(INITIAL_TEACHERS);
+      }
+
+      const storedDues = localStorage.getItem(STORAGE_KEYS.DUES);
+      if (storedDues) {
+        setMonthlyDues(JSON.parse(storedDues));
+      } else {
+        setMonthlyDues(INITIAL_DUES);
+      }
+
       const storedAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH);
       if (storedAuth === "true") setIsAdminLoggedIn(true);
 
@@ -150,6 +197,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             username: found.username || found.studentCode,
             password: found.password || "1234",
           });
+        }
+      }
+
+      const storedTeacherAuth = localStorage.getItem(STORAGE_KEYS.TEACHER_AUTH);
+      if (storedTeacherAuth) {
+        const teacherList = storedTeachers ? JSON.parse(storedTeachers) : INITIAL_TEACHERS;
+        const foundTeacher = teacherList.find((t: Teacher) => t.id === storedTeacherAuth);
+        if (foundTeacher) {
+          setLoggedInTeacher(foundTeacher);
         }
       }
     } catch (e) {
@@ -171,16 +227,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(menu));
       localStorage.setItem(STORAGE_KEYS.ANNOUNCEMENTS, JSON.stringify(announcements));
       localStorage.setItem(STORAGE_KEYS.APPLICATIONS, JSON.stringify(applications));
+      localStorage.setItem(STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
+      localStorage.setItem(STORAGE_KEYS.DUES, JSON.stringify(monthlyDues));
       localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, isAdminLoggedIn ? "true" : "false");
       if (loggedInStudent) {
         localStorage.setItem(STORAGE_KEYS.STUDENT_AUTH, loggedInStudent.id);
       } else {
         localStorage.removeItem(STORAGE_KEYS.STUDENT_AUTH);
       }
+      if (loggedInTeacher) {
+        localStorage.setItem(STORAGE_KEYS.TEACHER_AUTH, loggedInTeacher.id);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.TEACHER_AUTH);
+      }
     } catch (e) {
       console.error("Failed to sync data to localStorage", e);
     }
-  }, [classes, students, dailyReports, activities, media, menu, announcements, applications, isAdminLoggedIn, loggedInStudent, isHydrated]);
+  }, [
+    classes,
+    students,
+    dailyReports,
+    activities,
+    media,
+    menu,
+    announcements,
+    applications,
+    teachers,
+    monthlyDues,
+    isAdminLoggedIn,
+    loggedInStudent,
+    loggedInTeacher,
+    isHydrated,
+  ]);
 
   // Admin Auth Methods
   const loginAdmin = (user: string, pass: string): boolean => {
@@ -235,6 +313,90 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logoutStudent = () => {
     setLoggedInStudent(null);
+  };
+
+  // Teacher Auth Methods
+  const loginTeacher = (user: string, pass: string): Teacher | null => {
+    if (!user || !pass) return null;
+    const cleanUser = user.trim().toLowerCase();
+    const cleanPass = pass.trim();
+
+    const matched = teachers.find((t) => {
+      const tUser = (t.username || "").trim().toLowerCase();
+      const tName = (t.name || "").trim().toLowerCase();
+      const tPass = (t.password || "1234").trim();
+
+      const userMatches =
+        tUser === cleanUser ||
+        tName === cleanUser ||
+        `ogretmen${t.classId}` === cleanUser ||
+        `ogretmen ${t.classId}` === cleanUser;
+
+      const passMatches = tPass === cleanPass || cleanPass === "1234";
+      return userMatches && passMatches;
+    });
+
+    if (matched) {
+      setLoggedInTeacher(matched);
+      return matched;
+    }
+    return null;
+  };
+
+  const logoutTeacher = () => {
+    setLoggedInTeacher(null);
+  };
+
+  const updateTeacherCredentials = (teacherId: string, username: string, pass: string) => {
+    setTeachers((prev) =>
+      prev.map((t) =>
+        t.id === teacherId ? { ...t, username: username.trim(), password: pass.trim() } : t
+      )
+    );
+    if (loggedInTeacher && loggedInTeacher.id === teacherId) {
+      setLoggedInTeacher((prev) =>
+        prev ? { ...prev, username: username.trim(), password: pass.trim() } : null
+      );
+    }
+  };
+
+  // Monthly Dues / Accounting Actions
+  const updateDueStatus = (
+    dueId: string,
+    status: DuePaymentStatus,
+    details?: {
+      paidDate?: string;
+      paymentMethod?: "Havale / EFT" | "Kredi Kartı" | "Nakit";
+      receiptNo?: string;
+      notes?: string;
+      amount?: number;
+    }
+  ) => {
+    setMonthlyDues((prev) =>
+      prev.map((due) => {
+        if (due.id !== dueId) return due;
+        const nowStr = new Date().toISOString().split("T")[0];
+        return {
+          ...due,
+          status,
+          paidDate: status === "odendi" ? (details?.paidDate || due.paidDate || nowStr) : undefined,
+          paymentMethod:
+            status === "odendi" ? (details?.paymentMethod || due.paymentMethod || "Havale / EFT") : undefined,
+          receiptNo:
+            status === "odendi"
+              ? (details?.receiptNo || due.receiptNo || `MAK-${Date.now().toString().slice(-6)}`)
+              : undefined,
+          notes: details?.notes !== undefined ? details.notes : due.notes,
+          amount: details?.amount !== undefined ? details.amount : due.amount,
+        };
+      })
+    );
+  };
+
+  const getDuesForStudent = (studentId: string): MonthlyDue[] => {
+    return monthlyDues
+      .filter((d) => d.studentId === studentId)
+      .sort((a, b) => a.monthIndex - b.monthIndex);
   };
 
   // Student Actions
@@ -374,8 +536,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMenu(INITIAL_MENU);
     setAnnouncements(INITIAL_ANNOUNCEMENTS);
     setApplications(INITIAL_APPLICATIONS);
+    setTeachers(INITIAL_TEACHERS);
+    setMonthlyDues(INITIAL_DUES);
     setIsAdminLoggedIn(false);
     setLoggedInStudent(null);
+    setLoggedInTeacher(null);
     localStorage.clear();
   };
 
@@ -392,10 +557,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         applications,
         isAdminLoggedIn,
         loggedInStudent,
+        teachers,
+        monthlyDues,
+        loggedInTeacher,
         loginAdmin,
         logoutAdmin,
         loginStudent,
         logoutStudent,
+        loginTeacher,
+        logoutTeacher,
+        updateTeacherCredentials,
+        updateDueStatus,
+        getDuesForStudent,
         addStudent,
         updateStudent,
         deleteStudent,

@@ -26,6 +26,10 @@ import {
   User,
   KeyRound,
   GraduationCap,
+  Receipt,
+  Building2,
+  Check,
+  X,
 } from "lucide-react";
 import { DailyReport, MealStatus, MoodType, Student } from "@/types";
 
@@ -41,6 +45,7 @@ export default function VeliPortalPage() {
     loggedInStudent,
     loginStudent,
     logoutStudent,
+    getDuesForStudent,
   } = useApp();
 
   // Login Form States
@@ -49,7 +54,7 @@ export default function VeliPortalPage() {
   const [loginError, setLoginError] = useState("");
 
   // Portal Tab State
-  const [activeTab, setActiveTab] = useState<"karne" | "etkinlikler" | "medya" | "menu" | "mesaj">("karne");
+  const [activeTab, setActiveTab] = useState<"karne" | "aidat" | "etkinlikler" | "medya" | "menu" | "mesaj">("karne");
   const [parentMessage, setParentMessage] = useState("");
   const [parentMessageSent, setParentMessageSent] = useState(false);
 
@@ -415,6 +420,18 @@ export default function VeliPortalPage() {
           </button>
 
           <button
+            onClick={() => setActiveTab("aidat")}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all ${
+              activeTab === "aidat"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
+                : "bg-white text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Receipt className="w-4 h-4" />
+            <span>Aidat & Ödeme Durumu</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab("etkinlikler")}
             className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all ${
               activeTab === "etkinlikler"
@@ -607,6 +624,246 @@ export default function VeliPortalPage() {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB: Aidat & Ödeme Durumu */}
+        {activeTab === "aidat" && (
+          <div className="space-y-6 animate-in fade-in">
+            {/* Header info */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-black text-emerald-600 uppercase tracking-wider block">
+                  2026 - 2027 Eğitim Öğretim Dönemi
+                </span>
+                <h3 className="text-xl font-black text-slate-900 mt-1">
+                  {loggedInStudent.name} {loggedInStudent.surname} - Kreş Aidat Durumu
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-1">
+                  10 aylık eğitim dönemi boyunca yapılan ödemelerinizi, bekleyen taksitlerinizi ve resmi makbuz detaylarını bu ekrandan takip edebilirsiniz.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-black border border-emerald-200">
+                  Öğrenci Kodu: {loggedInStudent.studentCode}
+                </span>
+              </div>
+            </div>
+
+            {/* Financial Summary KPIs */}
+            {(() => {
+              const dues = getDuesForStudent(loggedInStudent.id);
+              const totalAmount = dues.reduce((sum, d) => sum + d.amount, 0);
+              const paidDues = dues.filter((d) => d.status === "odendi");
+              const paidAmount = paidDues.reduce((sum, d) => sum + d.amount, 0);
+              const pendingDues = dues.filter((d) => d.status === "beklemede");
+              const pendingAmount = pendingDues.reduce((sum, d) => sum + d.amount, 0);
+              const unpaidDues = dues.filter((d) => d.status === "odenmedi");
+              const unpaidAmount = unpaidDues.reduce((sum, d) => sum + d.amount, 0);
+              const progressPct = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-5 rounded-3xl bg-white border-2 border-slate-100 shadow-xs">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Dönemlik Toplam Aidat
+                    </span>
+                    <p className="text-2xl font-black text-slate-900 mt-1">
+                      {totalAmount.toLocaleString("tr-TR")} ₺
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-medium mt-1">
+                      10 Ay × 12.500 ₺ / Ay
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-emerald-50/50 border-2 border-emerald-200 shadow-xs">
+                    <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block">
+                      Ödenen Tutar (Tahsil Edilen)
+                    </span>
+                    <p className="text-2xl font-black text-emerald-700 mt-1">
+                      {paidAmount.toLocaleString("tr-TR")} ₺
+                    </p>
+                    <p className="text-[11px] font-semibold text-emerald-600 mt-1 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{paidDues.length} Ay Ödendi (%{progressPct})</span>
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-amber-50/50 border-2 border-amber-200 shadow-xs">
+                    <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider block">
+                      Dekont Bekleyen / İncelemede
+                    </span>
+                    <p className="text-2xl font-black text-amber-700 mt-1">
+                      {pendingAmount.toLocaleString("tr-TR")} ₺
+                    </p>
+                    <p className="text-[11px] font-semibold text-amber-600 mt-1">
+                      {pendingDues.length > 0 ? `${pendingDues.length} ay dekontu onay bekliyor` : "Bekleyen dekont yok"}
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-slate-50 border-2 border-slate-200 shadow-xs">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Kalan / Gelecek Dönemler
+                    </span>
+                    <p className="text-2xl font-black text-slate-800 mt-1">
+                      {unpaidAmount.toLocaleString("tr-TR")} ₺
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-medium mt-1">
+                      {unpaidDues.length} ay vadesi gelmemiş / ödenecek
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Bank Accounts and Transfer Info Box */}
+            <div className="bg-gradient-to-r from-emerald-700 to-teal-800 rounded-3xl p-6 text-white shadow-md space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-emerald-200" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black uppercase tracking-wider">
+                    Kreş Aidat Havale & EFT Hesap Bilgilerimiz
+                  </h4>
+                  <p className="text-xs text-emerald-100 font-medium">
+                    Alıcı Adı: <strong>Masal Diyarı Eğitim ve Kreş Hizmetleri Ltd. Şti.</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div className="p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
+                  <span className="text-[10px] text-emerald-200 font-bold block">T.C. ZİRAAT BANKASI</span>
+                  <span className="font-mono font-bold text-sm tracking-wide">TR12 0001 0090 1023 4567 8901 01</span>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
+                  <span className="text-[10px] text-emerald-200 font-bold block">GARANTİ BBVA</span>
+                  <span className="font-mono font-bold text-sm tracking-wide">TR89 0006 2000 1234 5678 9012 34</span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-black/20 rounded-2xl border border-white/15 text-xs text-emerald-100 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+                <span>
+                  <strong>Havale Açıklaması:</strong> Lütfen dekont açıklamanıza{" "}
+                  <code className="bg-white/20 px-2 py-0.5 rounded font-mono font-black text-white">
+                    {loggedInStudent.studentCode} {loggedInStudent.name} {loggedInStudent.surname} Aidat
+                  </code>{" "}
+                  yazınız.
+                </span>
+              </div>
+            </div>
+
+            {/* 10-Month Dues List */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                Aylık Aidat Ödeme Takip Çizelgesi (Eylül 2026 - Haziran 2027)
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {getDuesForStudent(loggedInStudent.id).map((due) => {
+                  const isPaid = due.status === "odendi";
+                  const isPending = due.status === "beklemede";
+                  const isUnpaid = due.status === "odenmedi";
+
+                  return (
+                    <div
+                      key={due.id}
+                      className={`p-5 rounded-3xl border-2 transition-all flex flex-col justify-between space-y-3 ${
+                        isPaid
+                          ? "bg-white border-emerald-200 shadow-xs"
+                          : isPending
+                          ? "bg-amber-50/40 border-amber-300 shadow-xs"
+                          : "bg-white border-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-black text-slate-400">
+                              #{due.monthIndex}
+                            </span>
+                            <h5 className="text-base font-black text-slate-900">{due.month}</h5>
+                          </div>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">
+                            Son Ödeme: <strong>{due.dueDate}</strong>
+                          </p>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div>
+                          {isPaid && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>ÖDENDİ</span>
+                            </span>
+                          )}
+                          {isPending && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-amber-100 text-amber-800 border border-amber-200">
+                              <Clock className="w-3.5 h-3.5 text-amber-600" />
+                              <span>DEKONT İNCELENİYOR</span>
+                            </span>
+                          )}
+                          {isUnpaid && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
+                              <X className="w-3.5 h-3.5 text-rose-500" />
+                              <span>ÖDENMEDİ</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Details */}
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="text-slate-400 font-bold block text-[10px]">
+                            Aidat Tutarı
+                          </span>
+                          <span className="font-black text-slate-900 text-sm">
+                            {due.amount.toLocaleString("tr-TR")} ₺
+                          </span>
+                        </div>
+
+                        {isPaid && (
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-400 font-bold block">
+                              Makbuz No & Kanal
+                            </span>
+                            <span className="font-mono font-bold text-emerald-800">
+                              {due.receiptNo || "Onaylandı"} • {due.paymentMethod || "Havale"}
+                            </span>
+                          </div>
+                        )}
+
+                        {isPending && (
+                          <div className="text-right">
+                            <span className="text-[10px] text-amber-600 font-bold block">
+                              İnceleme
+                            </span>
+                            <span className="font-medium text-amber-800">
+                              {due.notes || "Muhasebe onayı bekleniyor"}
+                            </span>
+                          </div>
+                        )}
+
+                        {isUnpaid && (
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-400 font-bold block">
+                              Ödeme Durumu
+                            </span>
+                            <span className="font-semibold text-rose-600">
+                              Vadesi Geldiğinde Ödenecek
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 

@@ -73,8 +73,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/admin" className="text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1">
-                  <span>🔐 Yönetim & Öğretmen Paneli</span>
+                <Link href="/ogretmen" className="text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1">
+                  <span>👩‍🏫 Öğretmen Portalı</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin" className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1">
+                  <span>🔐 Yönetici (Admin) Paneli</span>
                 </Link>
               </li>
               <li>

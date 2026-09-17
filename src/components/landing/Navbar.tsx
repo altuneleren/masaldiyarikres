@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Sparkles, HeartHandshake, ShieldCheck, Phone, Clock, Menu, X, UserCircle, Settings } from "lucide-react";
+import { Sparkles, HeartHandshake, ShieldCheck, Phone, Clock, Menu, X, UserCircle, Settings, GraduationCap } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export default function Navbar() {
@@ -29,6 +29,14 @@ export default function Navbar() {
               <ShieldCheck className="w-3.5 h-3.5 text-white" />
               <span className="font-medium">M.E.B. Bağlı & 7/24 Güvenlikli Kampüs</span>
             </span>
+            <span className="hidden md:inline">|</span>
+            <Link
+              href="/ogretmen"
+              className="hover:text-white flex items-center gap-1 font-bold transition-colors"
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Öğretmen Portalı</span>
+            </Link>
             <span className="hidden md:inline">|</span>
             <Link
               href="/admin"
@@ -150,22 +158,30 @@ export default function Navbar() {
       {/* Mobile Menu Dropdown */}
       {isOpen && (
         <div className="lg:hidden bg-white border-b border-amber-200 px-4 pt-3 pb-6 space-y-3 shadow-xl animate-in slide-in-from-top-2">
-          <div className="grid grid-cols-2 gap-2 pt-2 pb-3">
+          <div className="grid grid-cols-3 gap-2 pt-2 pb-3 text-xs">
             <Link
               href="/veli"
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 p-3 bg-sky-500 text-white rounded-2xl font-bold text-sm shadow-sm"
+              className="flex flex-col items-center justify-center gap-1 p-2.5 bg-sky-500 text-white rounded-2xl font-bold shadow-sm"
             >
               <UserCircle className="w-4 h-4" />
-              Veli Portalı
+              <span>Veli</span>
+            </Link>
+            <Link
+              href="/ogretmen"
+              onClick={() => setIsOpen(false)}
+              className="flex flex-col items-center justify-center gap-1 p-2.5 bg-purple-600 text-white rounded-2xl font-bold shadow-sm"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Öğretmen</span>
             </Link>
             <Link
               href="/admin"
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 p-3 bg-purple-600 text-white rounded-2xl font-bold text-sm shadow-sm"
+              className="flex flex-col items-center justify-center gap-1 p-2.5 bg-slate-800 text-white rounded-2xl font-bold shadow-sm"
             >
               <Settings className="w-4 h-4" />
-              Yönetim Paneli
+              <span>Admin</span>
             </Link>
           </div>
 

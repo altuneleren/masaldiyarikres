@@ -20,6 +20,8 @@ import {
   RotateCcw,
   ShieldCheck,
   UserCheck,
+  Receipt,
+  GraduationCap,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -62,6 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navLinks = [
     { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
+    { href: "/admin/muhasebe", label: "Muhasebe & Aidat Takibi", icon: Receipt },
     { href: "/admin/siniflar", label: "1-6. Sınıf & Öğrenci Yönetimi", icon: Users },
     { href: "/admin/gunluk-karne", label: "Günlük Karne / Durum Girişi", icon: Smile },
     { href: "/admin/medya", label: "Resim & Video Yükleme", icon: Camera },
@@ -190,6 +193,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="flex items-center gap-2">
               <Users className="w-3.5 h-3.5" />
               <span>Veli Portalı</span>
+            </span>
+            <span className="text-[10px]">↗</span>
+          </Link>
+
+          <Link
+            href="/ogretmen"
+            target="_blank"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-purple-400 hover:text-purple-300 hover:bg-slate-800 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Öğretmen Portalı</span>
             </span>
             <span className="text-[10px]">↗</span>
           </Link>

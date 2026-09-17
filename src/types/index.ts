@@ -111,3 +111,33 @@ export interface MealMenuItem {
   lunch: string;
   snack: string;
 }
+
+export interface Teacher {
+  id: string;
+  classId: number; // 1 to 6
+  name: string;
+  title: string;
+  username: string; // Giriş kullanıcı adı, örn: "ogretmen1", "merve"
+  password: string; // Şifre, örn: "1234"
+  phone: string;
+  email: string;
+  avatar: string;
+}
+
+export type DuePaymentStatus = "odendi" | "odenmedi" | "beklemede";
+
+export interface MonthlyDue {
+  id: string;
+  studentId: string;
+  classId: number;
+  month: string; // "Eylül 2026", "Ekim 2026", vb.
+  monthIndex: number; // 1 - 10
+  amount: number; // Tutar (TL)
+  status: DuePaymentStatus;
+  dueDate: string; // Son ödeme tarihi
+  paidDate?: string; // Ödenme tarihi
+  paymentMethod?: "Havale / EFT" | "Kredi Kartı" | "Nakit";
+  receiptNo?: string;
+  notes?: string;
+}
+

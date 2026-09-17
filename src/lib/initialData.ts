@@ -7,6 +7,8 @@ import {
   RegistrationApplication,
   Announcement,
   MealMenuItem,
+  Teacher,
+  MonthlyDue,
 } from "../types";
 
 export const INITIAL_CLASSES: ClassGroup[] = [
@@ -766,3 +768,169 @@ export const INITIAL_APPLICATIONS: RegistrationApplication[] = [
     status: "arandi",
   },
 ];
+
+export const ACADEMIC_MONTHS = [
+  "Eylül 2026",
+  "Ekim 2026",
+  "Kasım 2026",
+  "Aralık 2026",
+  "Ocak 2027",
+  "Şubat 2027",
+  "Mart 2027",
+  "Nisan 2027",
+  "Mayıs 2027",
+  "Haziran 2027",
+];
+
+export const INITIAL_TEACHERS: Teacher[] = [
+  {
+    id: "tch-1",
+    classId: 1,
+    name: "Merve Güneş",
+    title: "Bebek & Erken Çocukluk Gelişim Uzmanı",
+    username: "ogretmen1",
+    password: "1234",
+    phone: "0532 101 00 01",
+    email: "merve.gunes@masaldiyari.k12.tr",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "tch-2",
+    classId: 2,
+    name: "Zeynep Çelik",
+    title: "Çocuk Gelişimi & Montessori Eğitmeni",
+    username: "ogretmen2",
+    password: "1234",
+    phone: "0532 101 00 02",
+    email: "zeynep.celik@masaldiyari.k12.tr",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "tch-3",
+    classId: 3,
+    name: "Elif Doğan",
+    title: "Okul Öncesi Öğretmeni & Doğa Pedagoğu",
+    username: "ogretmen3",
+    password: "1234",
+    phone: "0532 101 00 03",
+    email: "elif.dogan@masaldiyari.k12.tr",
+    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "tch-4",
+    classId: 4,
+    name: "Selin Yılmaz",
+    title: "Okul Öncesi STEM & Zeka Oyunları Eğitmeni",
+    username: "ogretmen4",
+    password: "1234",
+    phone: "0532 101 00 04",
+    email: "selin.yilmaz@masaldiyari.k12.tr",
+    avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "tch-5",
+    classId: 5,
+    name: "Gamze Karaca",
+    title: "Sanat Eğitmeni & Masal Terapisti",
+    username: "ogretmen5",
+    password: "1234",
+    phone: "0532 101 00 05",
+    email: "gamze.karaca@masaldiyari.k12.tr",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "tch-6",
+    classId: 6,
+    name: "Ahmet Özdemir",
+    title: "Kıdemli Okul Öncesi Eğitim Koordinatörü",
+    username: "ogretmen6",
+    password: "1234",
+    phone: "0532 101 00 06",
+    email: "ahmet.ozdemir@masaldiyari.k12.tr",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+  },
+];
+
+// Helper to generate initial 10-month dues for all initial students
+const generateInitialDues = (): MonthlyDue[] => {
+  const dues: MonthlyDue[] = [];
+  const monthDueDates = [
+    "2026-09-05",
+    "2026-10-05",
+    "2026-11-05",
+    "2026-12-05",
+    "2027-01-05",
+    "2027-02-05",
+    "2027-03-05",
+    "2027-04-05",
+    "2027-05-05",
+    "2027-06-05",
+  ];
+
+  INITIAL_STUDENTS.forEach((student) => {
+    ACADEMIC_MONTHS.forEach((monthName, idx) => {
+      const monthIndex = idx + 1;
+      const dueDate = monthDueDates[idx];
+      const dueId = `due-${student.id}-${monthIndex}`;
+      let status: "odendi" | "odenmedi" | "beklemede" = "odenmedi";
+      let paidDate: string | undefined = undefined;
+      let paymentMethod: "Havale / EFT" | "Kredi Kartı" | "Nakit" | undefined = undefined;
+      let receiptNo: string | undefined = undefined;
+      let notes: string | undefined = undefined;
+
+      // Realistic mock statuses
+      if (monthIndex === 1) {
+        // September (current month): most paid, 1 pending, 1 unpaid
+        if (student.id === "stu-202") {
+          status = "beklemede";
+          notes = "Veli havale dekontu gönderecek";
+        } else if (student.id === "stu-602") {
+          status = "odenmedi";
+          notes = "Gecikmede - Hatırlatma SMS'i iletildi";
+        } else {
+          status = "odendi";
+          paidDate = `2026-09-0${(parseInt(student.id.replace(/\D/g, "")) % 4) + 1}`;
+          paymentMethod = idx % 2 === 0 ? "Havale / EFT" : "Kredi Kartı";
+          receiptNo = `MAK-2026-09-${student.id.replace("stu-", "")}`;
+          notes = "Eylül aidatı zamanında tahsil edildi";
+        }
+      } else if (monthIndex === 2) {
+        // October: a few early payers
+        if (student.id === "stu-101" || student.id === "stu-301" || student.id === "stu-501") {
+          status = "odendi";
+          paidDate = "2026-09-15";
+          paymentMethod = "Havale / EFT";
+          receiptNo = `MAK-2026-10-${student.id.replace("stu-", "")}`;
+          notes = "Erken dönem peşin ödendi";
+        } else if (student.id === "stu-102") {
+          status = "beklemede";
+          notes = "Kredi kartı otomatik talimatında";
+        } else {
+          status = "odenmedi";
+        }
+      } else {
+        // Months 3 to 10: upcoming
+        status = "odenmedi";
+      }
+
+      dues.push({
+        id: dueId,
+        studentId: student.id,
+        classId: student.classId,
+        month: monthName,
+        monthIndex,
+        amount: 12500, // 12.500 TL
+        status,
+        dueDate,
+        paidDate,
+        paymentMethod,
+        receiptNo,
+        notes,
+      });
+    });
+  });
+
+  return dues;
+};
+
+export const INITIAL_DUES: MonthlyDue[] = generateInitialDues();
