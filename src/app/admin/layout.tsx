@@ -22,6 +22,7 @@ import {
   UserCheck,
   Receipt,
   GraduationCap,
+  KeyRound,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -64,6 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navLinks = [
     { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
+    { href: "/admin/kullanicilar", label: "Kullanıcı & Şifre Yönetimi", icon: KeyRound },
     { href: "/admin/muhasebe", label: "Muhasebe & Aidat Takibi", icon: Receipt },
     { href: "/admin/siniflar", label: "1-6. Sınıf & Öğrenci Yönetimi", icon: Users },
     { href: "/admin/gunluk-karne", label: "Günlük Karne / Durum Girişi", icon: Smile },

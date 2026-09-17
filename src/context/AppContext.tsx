@@ -50,10 +50,13 @@ interface AppContextType {
   loginStudent: (username: string, pass: string) => Student | null;
   logoutStudent: () => void;
 
-  // Teacher Auth
+  // Teacher Auth & Management
   loginTeacher: (user: string, pass: string) => Teacher | null;
   logoutTeacher: () => void;
   updateTeacherCredentials: (teacherId: string, username: string, pass: string) => void;
+  updateTeacher: (id: string, updated: Partial<Teacher>) => void;
+  addTeacher: (teacherData: Omit<Teacher, "id">) => void;
+  deleteTeacher: (id: string) => void;
 
   // Monthly Dues / Accounting Actions
   updateDueStatus: (
@@ -360,6 +363,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateTeacher = (id: string, updated: Partial<Teacher>) => {
+    setTeachers((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...updated } : t))
+    );
+    if (loggedInTeacher && loggedInTeacher.id === id) {
+      setLoggedInTeacher((prev) => (prev ? { ...prev, ...updated } : null));
+    }
+  };
+
+  const addTeacher = (teacherData: Omit<Teacher, "id">) => {
+    const newTeacher: Teacher = {
+      ...teacherData,
+      id: `tch-${Date.now()}`,
+      password: teacherData.password || "1234",
+    };
+    setTeachers((prev) => [...prev, newTeacher]);
+  };
+
+  const deleteTeacher = (id: string) => {
+    setTeachers((prev) => prev.filter((t) => t.id !== id));
+  };
+
   // Monthly Dues / Accounting Actions
   const updateDueStatus = (
     dueId: string,
@@ -567,6 +592,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loginTeacher,
         logoutTeacher,
         updateTeacherCredentials,
+        updateTeacher,
+        addTeacher,
+        deleteTeacher,
         updateDueStatus,
         getDuesForStudent,
         addStudent,
