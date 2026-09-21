@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
 import {
@@ -54,7 +54,18 @@ export default function VeliPortalPage() {
     markMessagesAsRead,
     getMessagesForStudent,
     getUnreadCountForStudent,
+    selectedAcademicYear,
+    availableAcademicYears,
   } = useApp();
+
+  // Selected Academic Year for Parent Dues View (with default fallback to 2026-2027)
+  const [parentYear, setParentYear] = useState<string>(selectedAcademicYear || "2026-2027");
+
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      setParentYear(selectedAcademicYear);
+    }
+  }, [selectedAcademicYear]);
 
   // Login Form States
   const [loginUsername, setLoginUsername] = useState("");
@@ -64,6 +75,11 @@ export default function VeliPortalPage() {
   // Portal Tab State
   const [activeTab, setActiveTab] = useState<"karne" | "aidat" | "etkinlikler" | "medya" | "menu" | "mesaj">("karne");
   const [parentChatText, setParentChatText] = useState("");
+
+  // Dues filtered strictly by parentYear
+  const studentDues = useMemo(() => {
+    return loggedInStudent ? getDuesForStudent(loggedInStudent.id, parentYear) : [];
+  }, [loggedInStudent, getDuesForStudent, parentYear]);
 
   // Handle Parent Login
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -687,19 +703,49 @@ export default function VeliPortalPage() {
             {/* Header info */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
-                <span className="text-xs font-black text-emerald-600 uppercase tracking-wider block">
-                  2026 - 2027 Eğitim Öğretim Dönemi
-                </span>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="text-xs font-black text-emerald-600 uppercase tracking-wider block">
+                    {parentYear} Eğitim Öğretim Dönemi
+                  </span>
+                  {parentYear === "2026-2027" ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                      📁 2026 Arşiv Kayıtları
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      🌟 {parentYear} Aktif Dönem
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-xl font-black text-slate-900 mt-1">
                   {loggedInStudent.name} {loggedInStudent.surname} - Kreş Aidat Durumu
                 </h3>
                 <p className="text-xs text-slate-500 font-medium mt-1">
-                  10 aylık eğitim dönemi boyunca yapılan ödemelerinizi, bekleyen taksitlerinizi ve resmi makbuz detaylarını bu ekrandan takip edebilirsiniz.
+                  10 aylık eğitim dönemi boyunca yapılan ödemelerinizi, geçmiş ve gelecek taksitlerinizi ve resmi makbuz detaylarını bu ekrandan takip edebilirsiniz.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-black border border-emerald-200">
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Academic Year Selector for Parent */}
+                <div className="bg-white p-1 rounded-2xl flex items-center gap-1.5 border border-emerald-200 shadow-xs">
+                  <span className="text-[11px] font-black uppercase text-emerald-900 pl-2 flex items-center gap-1">
+                    <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Dönem:</span>
+                  </span>
+                  <select
+                    value={parentYear}
+                    onChange={(e) => setParentYear(e.target.value)}
+                    className="bg-emerald-50 hover:bg-emerald-100/80 text-emerald-950 font-black text-xs py-1.5 px-3 rounded-xl border border-emerald-200 focus:ring-2 focus:ring-emerald-400 cursor-pointer transition-colors"
+                  >
+                    {availableAcademicYears.map((yr) => (
+                      <option key={yr} value={yr}>
+                        {yr} {yr === "2026-2027" ? "(2026 Kayıtları)" : yr === "2029-2030" ? "(2029 Dönemi)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <span className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-800 text-xs font-black border border-slate-200">
                   Öğrenci Kodu: {loggedInStudent.studentCode}
                 </span>
               </div>
@@ -707,7 +753,7 @@ export default function VeliPortalPage() {
 
             {/* Financial Summary KPIs */}
             {(() => {
-              const dues = getDuesForStudent(loggedInStudent.id);
+              const dues = studentDues;
               const totalAmount = dues.reduce((sum, d) => sum + d.amount, 0);
               const paidDues = dues.filter((d) => d.status === "odendi");
               const paidAmount = paidDues.reduce((sum, d) => sum + d.amount, 0);
@@ -812,12 +858,17 @@ export default function VeliPortalPage() {
 
             {/* 10-Month Dues List */}
             <div className="space-y-3">
-              <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-                Aylık Aidat Ödeme Takip Çizelgesi (Eylül 2026 - Haziran 2027)
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                  Aylık Aidat Ödeme Takip Çizelgesi ({parentYear} Dönemi)
+                </h4>
+                <span className="text-xs text-slate-500 font-medium">
+                  {studentDues.filter((d) => d.status === "odendi").length} / {studentDues.length} Ay Ödendi
+                </span>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {getDuesForStudent(loggedInStudent.id).map((due) => {
+                {studentDues.map((due) => {
                   const isPaid = due.status === "odendi";
                   const isPending = due.status === "beklemede";
                   const isUnpaid = due.status === "odenmedi";

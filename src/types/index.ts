@@ -122,6 +122,8 @@ export interface Teacher {
   phone: string;
   email: string;
   avatar: string;
+  iban?: string;
+  baseSalary?: number;
 }
 
 export type DuePaymentStatus = "odendi" | "odenmedi" | "beklemede";
@@ -130,6 +132,7 @@ export interface MonthlyDue {
   id: string;
   studentId: string;
   classId: number;
+  academicYear?: string; // e.g. "2026-2027", "2027-2028", "2028-2029", "2029-2030"
   month: string; // "Eylül 2026", "Ekim 2026", vb.
   monthIndex: number; // 1 - 10
   amount: number; // Tutar (TL)
@@ -138,6 +141,26 @@ export interface MonthlyDue {
   paidDate?: string; // Ödenme tarihi
   paymentMethod?: "Havale / EFT" | "Kredi Kartı" | "Nakit";
   receiptNo?: string;
+  notes?: string;
+}
+
+export type SalaryPaymentStatus = "odendi" | "odenmedi";
+
+export interface TeacherSalary {
+  id: string;
+  teacherId: string;
+  academicYear?: string; // e.g. "2026-2027", "2027-2028", "2028-2029", "2029-2030"
+  month: string; // "Eylül 2026", "Ekim 2026", vb.
+  monthIndex: number; // 1 - 10
+  amount: number; // Net maaş (TL)
+  bonus?: number; // Ek prim / nöbet ücreti
+  deduction?: number; // Kesinti
+  netTotal: number; // Toplam ele geçen net tutar
+  status: SalaryPaymentStatus; // "odendi" | "odenmedi"
+  dueDate: string; // Planlanan maaş günü (Örn: "2026-09-15")
+  paidDate?: string; // Gerçekleşen ödeme tarihi
+  paymentMethod?: "Banka Transferi / EFT" | "Nakit";
+  dekontNo?: string;
   notes?: string;
 }
 
@@ -153,3 +176,31 @@ export interface ChatMessage {
   date: string; // YYYY-MM-DD
   read: boolean;
 }
+
+export type ExpenseCategory =
+  | "market_gida" // Market, Mutfak & Gıda Alışverişi
+  | "kirtasiye_egitim" // Kırtasiye, Sanat & Eğitici Materyaller
+  | "temizlik_hijyen" // Temizlik, Deterjan & Hijyen Ürünleri
+  | "faturalar" // Elektrik, Su, Doğalgaz, İnternet
+  | "kira_aidat" // Bina Kirası & Tesis Aidatı
+  | "bakim_onanim" // Bina, Bahçe & Donanım Bakımı
+  | "ulasim_servis" // Servis Akaryakıt & Araç Bakım
+  | "diger"; // Diğer İşletme Harcamaları
+
+export interface KindergartenExpense {
+  id: string;
+  title: string; // Harcama başlığı: örn "Haftalık Taze Sebze & Meyve Market Alışverişi"
+  category: ExpenseCategory;
+  amount: number; // Tutar (TL)
+  date: string; // YYYY-MM-DD
+  academicYear?: string; // e.g. "2026-2027", "2027-2028", "2028-2029", "2029-2030"
+  month: string; // "Eylül 2026", "Ekim 2026", vb.
+  paymentMethod: "Kurumsal Kredi Kartı" | "Nakit / Kasa" | "Banka Havalesi / EFT";
+  receiptNo?: string; // Fiş / Fatura No
+  supplier?: string; // Alışveriş yapılan kurum / market (Örn: "Migros Toptan", "Metro Market")
+  receiptImage?: string; // Fiş/fatura fotoğrafı (Base64 data URL veya görsel URL)
+  recordedBy?: string; // Harcamayı sisteme giren yönetici / personel
+  notes?: string;
+  createdAt: string;
+}
+

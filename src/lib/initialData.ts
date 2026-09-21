@@ -9,7 +9,11 @@ import {
   MealMenuItem,
   Teacher,
   MonthlyDue,
+  DuePaymentStatus,
   ChatMessage,
+  TeacherSalary,
+  SalaryPaymentStatus,
+  KindergartenExpense,
 } from "../types";
 
 export const INITIAL_CLASSES: ClassGroup[] = [
@@ -770,18 +774,49 @@ export const INITIAL_APPLICATIONS: RegistrationApplication[] = [
   },
 ];
 
-export const ACADEMIC_MONTHS = [
-  "Eylül 2026",
-  "Ekim 2026",
-  "Kasım 2026",
-  "Aralık 2026",
-  "Ocak 2027",
-  "Şubat 2027",
-  "Mart 2027",
-  "Nisan 2027",
-  "Mayıs 2027",
-  "Haziran 2027",
+export const DEFAULT_ACADEMIC_YEAR = "2026-2027";
+
+export const AVAILABLE_ACADEMIC_YEARS = [
+  "2026-2027",
+  "2027-2028",
+  "2028-2029",
+  "2029-2030",
+  "2030-2031",
 ];
+
+export const getAcademicMonthsForYear = (academicYear: string): string[] => {
+  const parts = academicYear.split("-");
+  const startYear = parseInt(parts[0], 10) || 2026;
+  const endYear = parseInt(parts[1], 10) || startYear + 1;
+
+  return [
+    `Eylül ${startYear}`,
+    `Ekim ${startYear}`,
+    `Kasım ${startYear}`,
+    `Aralık ${startYear}`,
+    `Ocak ${endYear}`,
+    `Şubat ${endYear}`,
+    `Mart ${endYear}`,
+    `Nisan ${endYear}`,
+    `Mayıs ${endYear}`,
+    `Haziran ${endYear}`,
+  ];
+};
+
+export const getAcademicYearFromDate = (dateStr: string): string => {
+  if (!dateStr) return DEFAULT_ACADEMIC_YEAR;
+  const parts = dateStr.split("-");
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  if (isNaN(year) || isNaN(month)) return DEFAULT_ACADEMIC_YEAR;
+  if (month >= 9) {
+    return `${year}-${year + 1}`;
+  } else {
+    return `${year - 1}-${year}`;
+  }
+};
+
+export const ACADEMIC_MONTHS = getAcademicMonthsForYear(DEFAULT_ACADEMIC_YEAR);
 
 export const INITIAL_TEACHERS: Teacher[] = [
   {
@@ -794,6 +829,8 @@ export const INITIAL_TEACHERS: Teacher[] = [
     phone: "0532 101 00 01",
     email: "merve.gunes@masaldiyari.k12.tr",
     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    iban: "TR34 0001 0090 1023 4567 8901 01",
+    baseSalary: 42500,
   },
   {
     id: "tch-2",
@@ -805,6 +842,8 @@ export const INITIAL_TEACHERS: Teacher[] = [
     phone: "0532 101 00 02",
     email: "zeynep.celik@masaldiyari.k12.tr",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    iban: "TR56 0006 2000 1234 5678 9012 34",
+    baseSalary: 41000,
   },
   {
     id: "tch-3",
@@ -816,6 +855,8 @@ export const INITIAL_TEACHERS: Teacher[] = [
     phone: "0532 101 00 03",
     email: "elif.dogan@masaldiyari.k12.tr",
     avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
+    iban: "TR78 0006 4000 0011 2233 4455 66",
+    baseSalary: 43500,
   },
   {
     id: "tch-4",
@@ -827,6 +868,8 @@ export const INITIAL_TEACHERS: Teacher[] = [
     phone: "0532 101 00 04",
     email: "selin.yilmaz@masaldiyari.k12.tr",
     avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80",
+    iban: "TR90 0001 5001 5566 7788 9900 11",
+    baseSalary: 42000,
   },
   {
     id: "tch-5",
@@ -838,6 +881,8 @@ export const INITIAL_TEACHERS: Teacher[] = [
     phone: "0532 101 00 05",
     email: "gamze.karaca@masaldiyari.k12.tr",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    iban: "TR12 0006 7000 9988 7766 5544 33",
+    baseSalary: 40500,
   },
   {
     id: "tch-6",
@@ -849,75 +894,87 @@ export const INITIAL_TEACHERS: Teacher[] = [
     phone: "0532 101 00 06",
     email: "ahmet.ozdemir@masaldiyari.k12.tr",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    iban: "TR34 0001 2009 8877 6655 4433 22",
+    baseSalary: 46000,
   },
 ];
 
-// Helper to generate initial 10-month dues for all initial students
-const generateInitialDues = (): MonthlyDue[] => {
+// Helper to generate 10-month dues for any academic year (2026-2027, 2027-2028, 2028-2029, 2029-2030, etc.)
+export const generateDuesForYear = (
+  academicYear: string,
+  students: Student[] = INITIAL_STUDENTS
+): MonthlyDue[] => {
   const dues: MonthlyDue[] = [];
+  const months = getAcademicMonthsForYear(academicYear);
+  const parts = academicYear.split("-");
+  const startYear = parseInt(parts[0], 10) || 2026;
+  const endYear = parseInt(parts[1], 10) || startYear + 1;
+
   const monthDueDates = [
-    "2026-09-05",
-    "2026-10-05",
-    "2026-11-05",
-    "2026-12-05",
-    "2027-01-05",
-    "2027-02-05",
-    "2027-03-05",
-    "2027-04-05",
-    "2027-05-05",
-    "2027-06-05",
+    `${startYear}-09-05`,
+    `${startYear}-10-05`,
+    `${startYear}-11-05`,
+    `${startYear}-12-05`,
+    `${endYear}-01-05`,
+    `${endYear}-02-05`,
+    `${endYear}-03-05`,
+    `${endYear}-04-05`,
+    `${endYear}-05-05`,
+    `${endYear}-06-05`,
   ];
 
-  INITIAL_STUDENTS.forEach((student) => {
-    ACADEMIC_MONTHS.forEach((monthName, idx) => {
+  students.forEach((student) => {
+    months.forEach((monthName, idx) => {
       const monthIndex = idx + 1;
       const dueDate = monthDueDates[idx];
-      const dueId = `due-${student.id}-${monthIndex}`;
-      let status: "odendi" | "odenmedi" | "beklemede" = "odenmedi";
+      const dueId = `due-${academicYear}-${student.id}-${monthIndex}`;
+      let status: DuePaymentStatus = "odenmedi";
       let paidDate: string | undefined = undefined;
       let paymentMethod: "Havale / EFT" | "Kredi Kartı" | "Nakit" | undefined = undefined;
       let receiptNo: string | undefined = undefined;
       let notes: string | undefined = undefined;
 
-      // Realistic mock statuses
-      if (monthIndex === 1) {
-        // September (current month): most paid, 1 pending, 1 unpaid
-        if (student.id === "stu-202") {
-          status = "beklemede";
-          notes = "Veli havale dekontu gönderecek";
-        } else if (student.id === "stu-602") {
-          status = "odenmedi";
-          notes = "Gecikmede - Hatırlatma SMS'i iletildi";
+      // Realistic mock payment records for the active 2026-2027 seed year
+      if (academicYear === "2026-2027") {
+        if (monthIndex === 1) {
+          // September (current month): most paid, 1 pending, 1 unpaid
+          if (student.id === "stu-202") {
+            status = "beklemede";
+            notes = "Veli havale dekontu gönderecek";
+          } else if (student.id === "stu-602") {
+            status = "odenmedi";
+            notes = "Gecikmede - Hatırlatma SMS'i iletildi";
+          } else {
+            status = "odendi";
+            paidDate = `2026-09-0${(parseInt(student.id.replace(/\D/g, "")) % 4) + 1}`;
+            paymentMethod = idx % 2 === 0 ? "Havale / EFT" : "Kredi Kartı";
+            receiptNo = `MAK-2026-09-${student.id.replace("stu-", "")}`;
+            notes = "Eylül aidatı zamanında tahsil edildi";
+          }
+        } else if (monthIndex === 2) {
+          // October: a few early payers
+          if (student.id === "stu-101" || student.id === "stu-301" || student.id === "stu-501") {
+            status = "odendi";
+            paidDate = "2026-09-15";
+            paymentMethod = "Havale / EFT";
+            receiptNo = `MAK-2026-10-${student.id.replace("stu-", "")}`;
+            notes = "Erken dönem peşin ödendi";
+          } else if (student.id === "stu-102") {
+            status = "beklemede";
+            notes = "Kredi kartı otomatik talimatında";
+          } else {
+            status = "odenmedi";
+          }
         } else {
-          status = "odendi";
-          paidDate = `2026-09-0${(parseInt(student.id.replace(/\D/g, "")) % 4) + 1}`;
-          paymentMethod = idx % 2 === 0 ? "Havale / EFT" : "Kredi Kartı";
-          receiptNo = `MAK-2026-09-${student.id.replace("stu-", "")}`;
-          notes = "Eylül aidatı zamanında tahsil edildi";
-        }
-      } else if (monthIndex === 2) {
-        // October: a few early payers
-        if (student.id === "stu-101" || student.id === "stu-301" || student.id === "stu-501") {
-          status = "odendi";
-          paidDate = "2026-09-15";
-          paymentMethod = "Havale / EFT";
-          receiptNo = `MAK-2026-10-${student.id.replace("stu-", "")}`;
-          notes = "Erken dönem peşin ödendi";
-        } else if (student.id === "stu-102") {
-          status = "beklemede";
-          notes = "Kredi kartı otomatik talimatında";
-        } else {
           status = "odenmedi";
         }
-      } else {
-        // Months 3 to 10: upcoming
-        status = "odenmedi";
       }
 
       dues.push({
         id: dueId,
         studentId: student.id,
         classId: student.classId,
+        academicYear,
         month: monthName,
         monthIndex,
         amount: 12500, // 12.500 TL
@@ -934,7 +991,10 @@ const generateInitialDues = (): MonthlyDue[] => {
   return dues;
 };
 
-export const INITIAL_DUES: MonthlyDue[] = generateInitialDues();
+// Seed initial dues across all available academic years (2026-2027, 2027-2028, 2028-2029, 2029-2030, 2030-2031)
+export const INITIAL_DUES: MonthlyDue[] = AVAILABLE_ACADEMIC_YEARS.flatMap((yr) =>
+  generateDuesForYear(yr, INITIAL_STUDENTS)
+);
 
 export const INITIAL_MESSAGES: ChatMessage[] = [
   // 1. Sınıf - Ali Demir (stu-101) & Merve Öğretmen
@@ -1031,3 +1091,629 @@ export const INITIAL_MESSAGES: ChatMessage[] = [
     read: true,
   },
 ];
+
+// Helper to generate 10-month salary slips for any academic year
+export const generateSalariesForYear = (
+  academicYear: string,
+  teachers: Teacher[] = INITIAL_TEACHERS
+): TeacherSalary[] => {
+  const salaries: TeacherSalary[] = [];
+  const months = getAcademicMonthsForYear(academicYear);
+  const parts = academicYear.split("-");
+  const startYear = parseInt(parts[0], 10) || 2026;
+  const endYear = parseInt(parts[1], 10) || startYear + 1;
+
+  const salaryPayDates = [
+    `${startYear}-09-15`,
+    `${startYear}-10-15`,
+    `${startYear}-11-15`,
+    `${startYear}-12-15`,
+    `${endYear}-01-15`,
+    `${endYear}-02-15`,
+    `${endYear}-03-15`,
+    `${endYear}-04-15`,
+    `${endYear}-05-15`,
+    `${endYear}-06-15`,
+  ];
+
+  teachers.forEach((teacher) => {
+    const base = teacher.baseSalary || 42000;
+
+    months.forEach((month, mIdx) => {
+      const monthNum = mIdx + 1;
+      const dueDate = salaryPayDates[mIdx];
+      let status: SalaryPaymentStatus = "odenmedi";
+      let paidDate: string | undefined = undefined;
+      let dekontNo: string | undefined = undefined;
+      let notes: string | undefined = undefined;
+      let bonus = 0;
+      const deduction = 0;
+
+      // Realistic mock statuses for the active 2026-2027 seed year
+      if (academicYear === "2026-2027") {
+        if (monthNum === 1) {
+          status = "odendi";
+          paidDate = "2026-09-15";
+          dekontNo = `BORD-2026-09-0${teacher.classId}`;
+          bonus = teacher.classId === 1 || teacher.classId === 6 ? 2000 : 1000;
+          notes = "Eylül ayı net maaşı ve eğitim-öğretime hazırlık ödeneği Ziraat Bankası maaş hesabına aktarıldı.";
+        } else if (monthNum === 2) {
+          if (teacher.classId <= 4) {
+            status = "odendi";
+            paidDate = "2026-10-15";
+            dekontNo = `BORD-2026-10-0${teacher.classId}`;
+            notes = "Ekim ayı net maaşı banka transferi ile yatırıldı.";
+          } else {
+            status = "odenmedi";
+            notes = "Ekim ayı maaş bordrosu muhasebe onayında bekliyor.";
+          }
+        } else {
+          status = "odenmedi";
+          notes = "Planlanan maaş ödeme günü her ayın 15'idir.";
+        }
+      } else {
+        status = "odenmedi";
+        notes = "Planlanan maaş ödeme günü her ayın 15'idir.";
+      }
+
+      salaries.push({
+        id: `sal-${academicYear}-${teacher.id}-${monthNum}`,
+        teacherId: teacher.id,
+        academicYear,
+        month,
+        monthIndex: monthNum,
+        amount: base,
+        bonus,
+        deduction,
+        netTotal: base + bonus - deduction,
+        status,
+        dueDate,
+        paidDate,
+        paymentMethod: "Banka Transferi / EFT",
+        dekontNo,
+        notes,
+      });
+    });
+  });
+
+  return salaries;
+};
+
+// Seed initial teacher salaries across all available academic years (2026-2027, 2027-2028, 2028-2029, 2029-2030, 2030-2031)
+export const INITIAL_TEACHER_SALARIES: TeacherSalary[] = AVAILABLE_ACADEMIC_YEARS.flatMap((yr) =>
+  generateSalariesForYear(yr, INITIAL_TEACHERS)
+);
+
+// Helper to generate realistic SVG thermal receipt / invoice data URLs
+export const createReceiptSvgDataUrl = (
+  storeName: string,
+  receiptNo: string,
+  date: string,
+  items: { name: string; price: number }[],
+  total: number,
+  categoryLabel: string
+): string => {
+  const itemsXml = items
+    .map(
+      (item, idx) => `
+    <text x="24" y="${175 + idx * 22}" font-family="monospace" font-size="11" fill="#334155">${item.name.slice(0, 24)}</text>
+    <text x="356" y="${175 + idx * 22}" font-family="monospace" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="end">${item.price.toLocaleString("tr-TR")} ₺</text>
+  `
+    )
+    .join("");
+
+  const totalY = 185 + items.length * 22;
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 490" width="380" height="490">
+    <rect width="100%" height="100%" fill="#f8fafc"/>
+    <rect x="10" y="10" width="360" height="470" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+    <path d="M 10 10 L 370 10" stroke="#cbd5e1" stroke-dasharray="4 4" stroke-width="2"/>
+    
+    <!-- Store Header -->
+    <text x="190" y="42" font-family="sans-serif" font-size="15" font-weight="900" fill="#0f172a" text-anchor="middle">${storeName.toUpperCase()}</text>
+    <text x="190" y="60" font-family="sans-serif" font-size="10" font-weight="bold" fill="#64748b" text-anchor="middle">ÖZEL MASAL DİYARI KREŞİ HARCAMA BELGESİ</text>
+    <text x="190" y="74" font-family="sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">KURUMSAL HARCAMA VE GİDER FİŞİ</text>
+    
+    <line x1="24" y1="88" x2="356" y2="88" stroke="#0f172a" stroke-width="1.5" stroke-dasharray="2 2"/>
+    
+    <!-- Meta Info -->
+    <text x="24" y="108" font-family="monospace" font-size="11" fill="#475569">TARİH : ${date}</text>
+    <text x="356" y="108" font-family="monospace" font-size="11" fill="#475569" text-anchor="end">FİŞ NO: ${receiptNo}</text>
+    <text x="24" y="125" font-family="monospace" font-size="11" fill="#475569">KATEG : ${categoryLabel}</text>
+    <text x="356" y="125" font-family="monospace" font-size="11" fill="#16a34a" font-weight="bold" text-anchor="end">✓ ÖDENDİ</text>
+    
+    <line x1="24" y1="138" x2="356" y2="138" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="24" y="154" font-family="sans-serif" font-size="10" font-weight="bold" fill="#64748b">ÜRÜN / AÇIKLAMA</text>
+    <text x="356" y="154" font-family="sans-serif" font-size="10" font-weight="bold" fill="#64748b" text-anchor="end">TUTAR</text>
+    <line x1="24" y1="162" x2="356" y2="162" stroke="#cbd5e1" stroke-width="1"/>
+    
+    <!-- Items -->
+    ${itemsXml}
+    
+    <line x1="24" y1="${totalY}" x2="356" y2="${totalY}" stroke="#0f172a" stroke-width="1.5"/>
+    <text x="24" y="${totalY + 24}" font-family="sans-serif" font-size="13" font-weight="900" fill="#0f172a">TOPLAM TUTAR</text>
+    <text x="356" y="${totalY + 24}" font-family="monospace" font-size="15" font-weight="900" fill="#059669" text-anchor="end">${total.toLocaleString("tr-TR")} ₺</text>
+    <text x="24" y="${totalY + 40}" font-family="sans-serif" font-size="9" fill="#64748b">KDV DAHİLDİR (KURUMSAL HARCAMA KARTI)</text>
+    
+    <!-- Barcode simulation -->
+    <rect x="90" y="${totalY + 54}" width="4" height="24" fill="#1e293b"/>
+    <rect x="98" y="${totalY + 54}" width="7" height="24" fill="#1e293b"/>
+    <rect x="109" y="${totalY + 54}" width="3" height="24" fill="#1e293b"/>
+    <rect x="115" y="${totalY + 54}" width="6" height="24" fill="#1e293b"/>
+    <rect x="124" y="${totalY + 54}" width="8" height="24" fill="#1e293b"/>
+    <rect x="136" y="${totalY + 54}" width="4" height="24" fill="#1e293b"/>
+    <rect x="144" y="${totalY + 54}" width="7" height="24" fill="#1e293b"/>
+    <rect x="155" y="${totalY + 54}" width="3" height="24" fill="#1e293b"/>
+    <rect x="162" y="${totalY + 54}" width="8" height="24" fill="#1e293b"/>
+    <rect x="174" y="${totalY + 54}" width="5" height="24" fill="#1e293b"/>
+    <rect x="183" y="${totalY + 54}" width="4" height="24" fill="#1e293b"/>
+    <rect x="191" y="${totalY + 54}" width="9" height="24" fill="#1e293b"/>
+    <rect x="204" y="${totalY + 54}" width="3" height="24" fill="#1e293b"/>
+    <rect x="211" y="${totalY + 54}" width="7" height="24" fill="#1e293b"/>
+    <rect x="222" y="${totalY + 54}" width="5" height="24" fill="#1e293b"/>
+    <rect x="231" y="${totalY + 54}" width="8" height="24" fill="#1e293b"/>
+    <rect x="243" y="${totalY + 54}" width="4" height="24" fill="#1e293b"/>
+    <rect x="251" y="${totalY + 54}" width="6" height="24" fill="#1e293b"/>
+    <rect x="261" y="${totalY + 54}" width="8" height="24" fill="#1e293b"/>
+    <rect x="273" y="${totalY + 54}" width="4" height="24" fill="#1e293b"/>
+    <text x="190" y="${totalY + 90}" font-family="monospace" font-size="9" fill="#94a3b8" text-anchor="middle">* * TEŞEKKÜR EDERİZ * *</text>
+  </svg>`;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
+export const SAMPLE_RECEIPT_PRESETS = [
+  {
+    name: "Migros Toptan Market Fişi (Mutfak & Kahvaltı)",
+    supplier: "Migros Ticaret A.Ş.",
+    category: "market_gida" as const,
+    getDataUrl: (amount: number, receiptNo: string, date: string) =>
+      createReceiptSvgDataUrl(
+        "MİGROS TOPTAN TİCARET",
+        receiptNo || "MGR-2026-8841",
+        date || "2026-09-08",
+        [
+          { name: "Taze Günlük Süt 30L", price: Math.round(amount * 0.22) },
+          { name: "Köy Yumurtası 120 Adet", price: Math.round(amount * 0.18) },
+          { name: "Taze Kaşar & Peynir", price: Math.round(amount * 0.25) },
+          { name: "Mevsim Meyveleri", price: Math.round(amount * 0.2) },
+          { name: "Taş Fırın Ekmek & Simit", price: amount - Math.round(amount * 0.85) },
+        ],
+        amount,
+        "Market & Gıda"
+      ),
+  },
+  {
+    name: "Metro Grossmarket (Kuru Gıda & Bakliyat Fişi)",
+    supplier: "Metro Gross Market Bakırköy",
+    category: "market_gida" as const,
+    getDataUrl: (amount: number, receiptNo: string, date: string) =>
+      createReceiptSvgDataUrl(
+        "METRO GROSSMARKET",
+        receiptNo || "MTR-2026-4412",
+        date || "2026-09-12",
+        [
+          { name: "Baldo Pirinç 25 kg Çuval", price: Math.round(amount * 0.28) },
+          { name: "Kırmızı Mercimek 15 kg", price: Math.round(amount * 0.18) },
+          { name: "Sızma Zeytinyağı 20 Litre", price: Math.round(amount * 0.32) },
+          { name: "Durum Buğdayı Makarna", price: amount - Math.round(amount * 0.78) },
+        ],
+        amount,
+        "Kuru Gıda Stok"
+      ),
+  },
+  {
+    name: "Nezih Kırtasiye (Boya, Kağıt & Sanat Faturası)",
+    supplier: "Nezih Kırtasiye & Sanat",
+    category: "kirtasiye_egitim" as const,
+    getDataUrl: (amount: number, receiptNo: string, date: string) =>
+      createReceiptSvgDataUrl(
+        "NEZİH KIRTASİYE A.Ş.",
+        receiptNo || "NZH-2026-1049",
+        date || "2026-09-05",
+        [
+          { name: "Faber Parmak Boyası 60lı", price: Math.round(amount * 0.35) },
+          { name: "PlayDoh Oyun Hamuru Set", price: Math.round(amount * 0.25) },
+          { name: "Resim Kağıdı & Karton", price: Math.round(amount * 0.22) },
+          { name: "Güvenli Çocuk Makasları", price: amount - Math.round(amount * 0.82) },
+        ],
+        amount,
+        "Kırtasiye & Sanat"
+      ),
+  },
+  {
+    name: "Enerjisa Elektrik Faturası",
+    supplier: "Enerjisa Dağıtım A.Ş.",
+    category: "faturalar" as const,
+    getDataUrl: (amount: number, receiptNo: string, date: string) =>
+      createReceiptSvgDataUrl(
+        "ENERJİSA ELEKTRİK A.Ş.",
+        receiptNo || "ENR-2026-5519",
+        date || "2026-09-22",
+        [
+          { name: "Aktif Enerji Tüketim Bedeli", price: Math.round(amount * 0.65) },
+          { name: "Dağıtım ve İletim Bedeli", price: Math.round(amount * 0.2) },
+          { name: "Enerji Fonu & KDV", price: amount - Math.round(amount * 0.85) },
+        ],
+        amount,
+        "Elektrik Faturası"
+      ),
+  },
+  {
+    name: "Eczacıbaşı Profesyonel Hijyen & Temizlik Fişi",
+    supplier: "Eczacıbaşı Tüketim Ürünleri",
+    category: "temizlik_hijyen" as const,
+    getDataUrl: (amount: number, receiptNo: string, date: string) =>
+      createReceiptSvgDataUrl(
+        "ECZACIBAŞI PROFESYONEL",
+        receiptNo || "ECZ-2026-3021",
+        date || "2026-09-10",
+        [
+          { name: "Antibakteriyel Sıvı Sabun 30L", price: Math.round(amount * 0.32) },
+          { name: "Yüzey Dezenfektanı 20L", price: Math.round(amount * 0.38) },
+          { name: "Sens Kağıt Rulo Havlu 24lü", price: amount - Math.round(amount * 0.7) },
+        ],
+        amount,
+        "Temizlik & Hijyen"
+      ),
+  },
+];
+
+const BASE_INITIAL_EXPENSES: KindergartenExpense[] = [
+  {
+    id: "exp-1",
+    title: "Haftalık Taze Sebze, Meyve & Kahvaltılık Market Alışverişi",
+    category: "market_gida",
+    amount: 6450,
+    date: "2026-09-08",
+    month: "Eylül 2026",
+    paymentMethod: "Kurumsal Kredi Kartı",
+    supplier: "Migros Toptan Ticaret",
+    receiptNo: "MGR-2026-8841",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "Tüm sınıfların 1 haftalık taze meyve saati ve sabah kahvaltısı alışverişi.",
+    createdAt: "2026-09-08T11:20:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "MİGROS TOPTAN TİCARET",
+      "MGR-2026-8841",
+      "2026-09-08",
+      [
+        { name: "Taze Günlük Süt (30 Litre)", price: 1420 },
+        { name: "Köy Yumurtası (120 Adet)", price: 1150 },
+        { name: "Tam Yağlı Kaşar & Peynir", price: 1620 },
+        { name: "Elma, Muz & Mandalina", price: 1380 },
+        { name: "Taş Fırın Ekmek & Simit", price: 880 },
+      ],
+      6450,
+      "Market & Gıda"
+    ),
+  },
+  {
+    id: "exp-2",
+    title: "Kuru Bakliyat, Zeytinyağı, Un & Mutfak Stok Alımı",
+    category: "market_gida",
+    amount: 8900,
+    date: "2026-09-12",
+    month: "Eylül 2026",
+    paymentMethod: "Kurumsal Kredi Kartı",
+    supplier: "Metro Gross Market",
+    receiptNo: "MTR-2026-4412",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "Mutfak yemekhanesi için aylık bakliyat, ayçiçek ve zeytinyağı toptan tedariği.",
+    createdAt: "2026-09-12T14:40:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "METRO GROSSMARKET",
+      "MTR-2026-4412",
+      "2026-09-12",
+      [
+        { name: "Baldo Pirinç 25 kg", price: 2450 },
+        { name: "Kırmızı Mercimek 15 kg", price: 1650 },
+        { name: "Sızma Zeytinyağı 20 L", price: 2900 },
+        { name: "Makarna & Un 50 kg", price: 1900 },
+      ],
+      8900,
+      "Mutfak Stok"
+    ),
+  },
+  {
+    id: "exp-3",
+    title: "Yeni Eğitim Yılı Kırtasiye, Parmak Boyası & Hamur Setleri",
+    category: "kirtasiye_egitim",
+    amount: 14500,
+    date: "2026-09-05",
+    month: "Eylül 2026",
+    paymentMethod: "Banka Havalesi / EFT",
+    supplier: "Nezih Kırtasiye & Sanat",
+    receiptNo: "NZH-2026-1049",
+    recordedBy: "Elif Demir (Zümre Bşk.)",
+    notes: "6 sınıfın 1. dönem tüm sanat, boyama ve etkinlik kırtasiye paketleri.",
+    createdAt: "2026-09-05T09:15:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "NEZİH KIRTASİYE A.Ş.",
+      "NZH-2026-1049",
+      "2026-09-05",
+      [
+        { name: "Faber Parmak Boyası 60lı", price: 4950 },
+        { name: "PlayDoh Hamur 60lı Set", price: 3750 },
+        { name: "A4 Resim Kağıdı & Karton", price: 3200 },
+        { name: "Güvenli Plastik Makaslar", price: 2600 },
+      ],
+      14500,
+      "Kırtasiye & Sanat"
+    ),
+  },
+  {
+    id: "exp-4",
+    title: "Aylık Endüstriyel Temizlik Malzemesi & Dezenfektan",
+    category: "temizlik_hijyen",
+    amount: 5750,
+    date: "2026-09-10",
+    month: "Eylül 2026",
+    paymentMethod: "Kurumsal Kredi Kartı",
+    supplier: "Eczacıbaşı Profesyonel",
+    receiptNo: "ECZ-2026-3021",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "Sınıflar, mutfak ve tuvaletler için hipoalerjenik çocuk dostu temizlik ürünleri.",
+    createdAt: "2026-09-10T16:00:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "ECZACIBAŞI PROFESYONEL",
+      "ECZ-2026-3021",
+      "2026-09-10",
+      [
+        { name: "Antibakteriyel Sıvı Sabun 30L", price: 1850 },
+        { name: "Zemin & Oyuncak Dezenfektanı", price: 2150 },
+        { name: "Rulo Kağıt Havlu 24lü x 4", price: 1750 },
+      ],
+      5750,
+      "Temizlik & Hijyen"
+    ),
+  },
+  {
+    id: "exp-5",
+    title: "Eylül Ayı Doğalgaz & Merkezi Isınma Faturası",
+    category: "faturalar",
+    amount: 3850,
+    date: "2026-09-20",
+    month: "Eylül 2026",
+    paymentMethod: "Banka Havalesi / EFT",
+    supplier: "Başkentgaz Dağıtım A.Ş.",
+    receiptNo: "BKG-2026-9022",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "Kreş binası ve yemekhane sıcak su & petek ısıtma doğalgaz bedeli.",
+    createdAt: "2026-09-20T10:30:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "BAŞKENTGAZ DAĞITIM A.Ş.",
+      "BKG-2026-9022",
+      "2026-09-20",
+      [
+        { name: "Doğalgaz Tüketim Bedeli", price: 3150 },
+        { name: "Sistem Kullanım & ÖTV", price: 700 },
+      ],
+      3850,
+      "Doğalgaz Faturası"
+    ),
+  },
+  {
+    id: "exp-6",
+    title: "Eylül Ayı Elektrik & Aydınlatma Faturası",
+    category: "faturalar",
+    amount: 4600,
+    date: "2026-09-22",
+    month: "Eylül 2026",
+    paymentMethod: "Banka Havalesi / EFT",
+    supplier: "Enerjisa Dağıtım A.Ş.",
+    receiptNo: "ENR-2026-5519",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "Mutfak buzdolapları, aydınlatma ve havalandırma elektrik sarfiyatı.",
+    createdAt: "2026-09-22T11:00:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "ENERJİSA ELEKTRİK A.Ş.",
+      "ENR-2026-5519",
+      "2026-09-22",
+      [
+        { name: "Aktif Enerji Tüketim Bedeli", price: 2990 },
+        { name: "Dağıtım ve İletim Bedeli", price: 920 },
+        { name: "Enerji Fonu & KDV", price: 690 },
+      ],
+      4600,
+      "Elektrik Faturası"
+    ),
+  },
+  {
+    id: "exp-7",
+    title: "Bahçe Çim Bakımı, Kum Havuzu Yenileme & Çit Onarımı",
+    category: "bakim_onanim",
+    amount: 6200,
+    date: "2026-09-14",
+    month: "Eylül 2026",
+    paymentMethod: "Banka Havalesi / EFT",
+    supplier: "Park & Bahçe Peyzaj San.",
+    receiptNo: "PB-2026-0881",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "Çocuk oyun bahçesi steril kum yenilemesi ve ahşap koruma boyası.",
+    createdAt: "2026-09-14T13:45:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "PARK & PEYZAJ SANAYİ",
+      "PB-2026-0881",
+      "2026-09-14",
+      [
+        { name: "Steril Oyun Kumu 500 kg", price: 3400 },
+        { name: "Ahşap Çit Cilası ve İşçilik", price: 2800 },
+      ],
+      6200,
+      "Bakım & Onarım"
+    ),
+  },
+  {
+    id: "exp-8",
+    title: "Kreş Öğrenci Servis Araçları Eylül Ayı Mazot / Yakıt Gideri",
+    category: "ulasim_servis",
+    amount: 8400,
+    date: "2026-09-25",
+    month: "Eylül 2026",
+    paymentMethod: "Kurumsal Kredi Kartı",
+    supplier: "Opet Akaryakıt İstasyonu",
+    receiptNo: "OPT-2026-6632",
+    recordedBy: "Ahmet Usta (Servis Şefi)",
+    notes: "2 adet öğrenci servis minibüsünün Eylül ayı filo yakıt dolumu.",
+    createdAt: "2026-09-25T17:10:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "OPET AKARYAKIT İSTASYONU",
+      "OPT-2026-6632",
+      "2026-09-25",
+      [
+        { name: "Motorin V/Max (210 Litre)", price: 8400 },
+      ],
+      8400,
+      "Servis & Yakıt"
+    ),
+  },
+  {
+    id: "exp-9",
+    title: "Ekim 1. Hafta Taze Süt, Yoğurt, Meyve ve Et Alışverişi",
+    category: "market_gida",
+    amount: 7300,
+    date: "2026-10-06",
+    month: "Ekim 2026",
+    paymentMethod: "Kurumsal Kredi Kartı",
+    supplier: "Migros Toptan Ticaret",
+    receiptNo: "MGR-2026-9210",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "Ekim ayı ilk haftası yemek menüsü et, tavuk ve taze yoğurt alışverişi.",
+    createdAt: "2026-10-06T11:45:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "MİGROS TOPTAN TİCARET",
+      "MGR-2026-9210",
+      "2026-10-06",
+      [
+        { name: "Dana Kıyma & Kuşbaşı 10 kg", price: 3800 },
+        { name: "Taze Yoğurt & Ayran 20 kg", price: 1350 },
+        { name: "Mevsim Meyvesi & Yeşillik", price: 1250 },
+        { name: "Kahvaltılık Kaşar & Tereyağ", price: 900 },
+      ],
+      7300,
+      "Market & Gıda"
+    ),
+  },
+  {
+    id: "exp-10",
+    title: "Montessori Ahşap Denge Tahtası & Zeka Oyunları",
+    category: "kirtasiye_egitim",
+    amount: 9800,
+    date: "2026-10-10",
+    month: "Ekim 2026",
+    paymentMethod: "Kurumsal Kredi Kartı",
+    supplier: "Ahşap Masal Eğitici Oyuncak",
+    receiptNo: "AMS-2026-7714",
+    recordedBy: "Merve Güneş (Öğretmen)",
+    notes: "1-3 yaş sınıfları motor beceri geliştirici ahşap oyuncak takımları.",
+    createdAt: "2026-10-10T15:20:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "AHŞAP MASAL EĞİTİCİ OYUNCAK",
+      "AMS-2026-7714",
+      "2026-10-10",
+      [
+        { name: "Montessori Denge Tahtası x 4", price: 4200 },
+        { name: "Geometrik Blok Takımları", price: 3100 },
+        { name: "Ahşap Yapboz & Labirent", price: 2500 },
+      ],
+      9800,
+      "Eğitici Oyuncak"
+    ),
+  },
+];
+
+// Export multi-year INITIAL_EXPENSES, preserving 2026 records and seeding future year samples
+export const INITIAL_EXPENSES: KindergartenExpense[] = [
+  ...BASE_INITIAL_EXPENSES.map((e) => ({
+    ...e,
+    academicYear: e.academicYear || getAcademicYearFromDate(e.date),
+  })),
+  // 2027-2028 Academic Year Sample Expense
+  {
+    id: "exp-2027-1",
+    title: "2027-2028 Dönemi Taze Mutfak & Market Alışverişi",
+    category: "market_gida",
+    amount: 8200,
+    date: "2027-09-08",
+    academicYear: "2027-2028",
+    month: "Eylül 2027",
+    paymentMethod: "Kurumsal Kredi Kartı",
+    supplier: "Migros Toptan Ticaret",
+    receiptNo: "MGR-2027-1102",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "2027-2028 yeni eğitim yılı ilk hafta kahvaltı ve taze meyve tedariği.",
+    createdAt: "2027-09-08T10:00:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "MİGROS TOPTAN TİCARET",
+      "MGR-2027-1102",
+      "2027-09-08",
+      [
+        { name: "Taze Günlük Süt (35 L)", price: 1950 },
+        { name: "Köy Yumurtası (150 Adet)", price: 1650 },
+        { name: "Kahvaltılık Kaşar & Peynir", price: 2400 },
+        { name: "Mevsim Meyveleri", price: 2200 },
+      ],
+      8200,
+      "Market & Gıda"
+    ),
+  },
+  // 2028-2029 Academic Year Sample Expense
+  {
+    id: "exp-2028-1",
+    title: "2028-2029 Dönemi Kırtasiye, Boya & Atölye Paketleri",
+    category: "kirtasiye_egitim",
+    amount: 17500,
+    date: "2028-09-05",
+    academicYear: "2028-2029",
+    month: "Eylül 2028",
+    paymentMethod: "Banka Havalesi / EFT",
+    supplier: "Nezih Kırtasiye & Sanat",
+    receiptNo: "NZH-2028-4091",
+    recordedBy: "Elif Demir (Zümre Bşk.)",
+    notes: "2028-2029 dönemi tüm sınıfların yıllık sanat ve kırtasiye malzemeleri.",
+    createdAt: "2028-09-05T09:30:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "NEZİH KIRTASİYE A.Ş.",
+      "NZH-2028-4091",
+      "2028-09-05",
+      [
+        { name: "Parmak Boyası ve Guaj Setleri", price: 6200 },
+        { name: "Resim Kağıtları & Kartonlar", price: 4800 },
+        { name: "Kil ve Seramik Çamuru", price: 3500 },
+        { name: "Makas, Yapıştırıcı ve Fırçalar", price: 3000 },
+      ],
+      17500,
+      "Kırtasiye & Sanat"
+    ),
+  },
+  // 2029-2030 Academic Year Sample Expense
+  {
+    id: "exp-2029-1",
+    title: "2029-2030 Dönemi Temizlik, Hijyen & Dezenfektan Alımı",
+    category: "temizlik_hijyen",
+    amount: 7800,
+    date: "2029-09-10",
+    academicYear: "2029-2030",
+    month: "Eylül 2029",
+    paymentMethod: "Kurumsal Kredi Kartı",
+    supplier: "Eczacıbaşı Profesyonel",
+    receiptNo: "ECZ-2029-5012",
+    recordedBy: "Zehra Yılmaz (Müdür)",
+    notes: "2029-2030 eğitim yılı başlangıç genel bina hijyen ve temizlik stokları.",
+    createdAt: "2029-09-10T14:15:00Z",
+    receiptImage: createReceiptSvgDataUrl(
+      "ECZACIBAŞI PROFESYONEL",
+      "ECZ-2029-5012",
+      "2029-09-10",
+      [
+        { name: "Antibakteriyel Köpük Sabun", price: 2600 },
+        { name: "Çocuk Dostu Zemin Dezenfektanı", price: 2900 },
+        { name: "Endüstriyel Kağıt Havlu", price: 2300 },
+      ],
+      7800,
+      "Temizlik & Hijyen"
+    ),
+  },
+];
+

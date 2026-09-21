@@ -1,0 +1,9 @@
+# © 2026 Masal Diyarı Kreş ve Gündüz Bakımevi. Tüm Hakları Saklıdır.
+# 5846 Sayılı Fikir ve Sanat Eserleri Kanunu Uyarınca Korunmaktadır.
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /ogretmen/
+Disallow: /veli/
+Disallow: /api/

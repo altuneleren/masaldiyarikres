@@ -14,6 +14,9 @@ import {
   MonthlyDue,
   DuePaymentStatus,
   ChatMessage,
+  TeacherSalary,
+  SalaryPaymentStatus,
+  KindergartenExpense,
 } from "../types";
 import {
   INITIAL_CLASSES,
@@ -27,6 +30,14 @@ import {
   INITIAL_TEACHERS,
   INITIAL_DUES,
   INITIAL_MESSAGES,
+  INITIAL_TEACHER_SALARIES,
+  INITIAL_EXPENSES,
+  DEFAULT_ACADEMIC_YEAR,
+  AVAILABLE_ACADEMIC_YEARS,
+  getAcademicMonthsForYear,
+  getAcademicYearFromDate,
+  generateDuesForYear,
+  generateSalariesForYear,
 } from "../lib/initialData";
 
 interface AppContextType {
@@ -44,6 +55,18 @@ interface AppContextType {
   monthlyDues: MonthlyDue[];
   loggedInTeacher: Teacher | null;
   messages: ChatMessage[];
+  teacherSalaries: TeacherSalary[];
+  expenses: KindergartenExpense[];
+  addExpense: (expense: Omit<KindergartenExpense, "id" | "createdAt">) => void;
+  updateExpense: (id: string, updated: Partial<KindergartenExpense>) => void;
+  deleteExpense: (id: string) => void;
+
+  // Multi-Year Academic Calendar Management
+  selectedAcademicYear: string;
+  setSelectedAcademicYear: (year: string) => void;
+  availableAcademicYears: string[];
+  addNewAcademicYear: (year: string) => void;
+  ensureRecordsForAcademicYear: (year: string) => void;
 
   // Chat Actions
   sendMessage: (msg: {
@@ -87,7 +110,15 @@ interface AppContextType {
       amount?: number;
     }
   ) => void;
-  getDuesForStudent: (studentId: string) => MonthlyDue[];
+  getDuesForStudent: (studentId: string, academicYear?: string) => MonthlyDue[];
+
+  // Teacher Salary Actions
+  updateSalaryStatus: (
+    id: string,
+    status: SalaryPaymentStatus,
+    details?: Partial<TeacherSalary>
+  ) => void;
+  getSalariesForTeacher: (teacherId: string, academicYear?: string) => TeacherSalary[];
 
   // Student Actions
   addStudent: (student: Omit<Student, "id">) => void;
@@ -138,6 +169,10 @@ const STORAGE_KEYS = {
   DUES: "masal_dues_v1",
   TEACHER_AUTH: "masal_teacher_auth_v1",
   MESSAGES: "masal_messages_v1",
+  SALARIES: "masal_teacher_salaries_v1",
+  EXPENSES: "masal_expenses_v1",
+  ACADEMIC_YEAR: "masal_academic_year_v1",
+  AVAILABLE_YEARS: "masal_available_academic_years_v1",
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -155,9 +190,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [monthlyDues, setMonthlyDues] = useState<MonthlyDue[]>(INITIAL_DUES);
   const [loggedInTeacher, setLoggedInTeacher] = useState<Teacher | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [teacherSalaries, setTeacherSalaries] = useState<TeacherSalary[]>(INITIAL_TEACHER_SALARIES);
+  const [expenses, setExpenses] = useState<KindergartenExpense[]>(INITIAL_EXPENSES);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(DEFAULT_ACADEMIC_YEAR);
+  const [availableAcademicYears, setAvailableAcademicYears] = useState<string[]>(AVAILABLE_ACADEMIC_YEARS);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from LocalStorage on mount
+  // Load from LocalStorage on mount with automatic non-destructive migration
   useEffect(() => {
     try {
       const storedClasses = localStorage.getItem(STORAGE_KEYS.CLASSES);
@@ -199,9 +238,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setTeachers(INITIAL_TEACHERS);
       }
 
+      // Academic Years and Selected Year Hydration
+      const storedYear = localStorage.getItem(STORAGE_KEYS.ACADEMIC_YEAR);
+      if (storedYear) setSelectedAcademicYear(storedYear);
+
+      const storedYears = localStorage.getItem(STORAGE_KEYS.AVAILABLE_YEARS);
+      if (storedYears) {
+        try {
+          const parsed = JSON.parse(storedYears);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAvailableAcademicYears(Array.from(new Set([...AVAILABLE_ACADEMIC_YEARS, ...parsed])));
+          }
+        } catch {
+          // fallback to defaults
+        }
+      }
+
+      // Monthly Dues Hydration: STRICT NON-DESTRUCTIVE RETENTION
       const storedDues = localStorage.getItem(STORAGE_KEYS.DUES);
       if (storedDues) {
-        setMonthlyDues(JSON.parse(storedDues));
+        const parsedDues: MonthlyDue[] = JSON.parse(storedDues);
+        // Tag past records with academicYear if missing (defaulting to 2026-2027)
+        const migratedDues = parsedDues.map((d) => ({
+          ...d,
+          academicYear: d.academicYear || "2026-2027",
+        }));
+        // Merge missing seeds for other available academic years without overwriting ANY existing record
+        const existingKeys = new Set(
+          migratedDues.map((d) => `${d.academicYear || "2026-2027"}-${d.studentId}-${d.monthIndex}`)
+        );
+        const missingSeeds = INITIAL_DUES.filter(
+          (d) => !existingKeys.has(`${d.academicYear || "2026-2027"}-${d.studentId}-${d.monthIndex}`)
+        );
+        setMonthlyDues([...migratedDues, ...missingSeeds]);
       } else {
         setMonthlyDues(INITIAL_DUES);
       }
@@ -237,6 +306,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else {
         setMessages(INITIAL_MESSAGES);
       }
+
+      // Teacher Salaries Hydration: STRICT NON-DESTRUCTIVE RETENTION
+      const storedSalaries = localStorage.getItem(STORAGE_KEYS.SALARIES);
+      if (storedSalaries) {
+        const parsedSal: TeacherSalary[] = JSON.parse(storedSalaries);
+        const migratedSal = parsedSal.map((s) => ({
+          ...s,
+          academicYear: s.academicYear || "2026-2027",
+        }));
+        const existingKeys = new Set(
+          migratedSal.map((s) => `${s.academicYear || "2026-2027"}-${s.teacherId}-${s.monthIndex}`)
+        );
+        const missingSeeds = INITIAL_TEACHER_SALARIES.filter(
+          (s) => !existingKeys.has(`${s.academicYear || "2026-2027"}-${s.teacherId}-${s.monthIndex}`)
+        );
+        setTeacherSalaries([...migratedSal, ...missingSeeds]);
+      } else {
+        setTeacherSalaries(INITIAL_TEACHER_SALARIES);
+      }
+
+      // Expenses Hydration: STRICT NON-DESTRUCTIVE RETENTION
+      const storedExpenses = localStorage.getItem(STORAGE_KEYS.EXPENSES);
+      if (storedExpenses) {
+        const parsedExp: KindergartenExpense[] = JSON.parse(storedExpenses);
+        const migratedExp = parsedExp.map((e) => ({
+          ...e,
+          academicYear: e.academicYear || getAcademicYearFromDate(e.date),
+        }));
+        const existingIds = new Set(migratedExp.map((e) => e.id));
+        const missingExp = INITIAL_EXPENSES.filter((e) => !existingIds.has(e.id));
+        setExpenses([...migratedExp, ...missingExp]);
+      } else {
+        setExpenses(INITIAL_EXPENSES);
+      }
     } catch (e) {
       console.error("Failed to load data from localStorage", e);
     } finally {
@@ -259,6 +362,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem(STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
       localStorage.setItem(STORAGE_KEYS.DUES, JSON.stringify(monthlyDues));
       localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
+      localStorage.setItem(STORAGE_KEYS.SALARIES, JSON.stringify(teacherSalaries));
+      localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
+      localStorage.setItem(STORAGE_KEYS.ACADEMIC_YEAR, selectedAcademicYear);
+      localStorage.setItem(STORAGE_KEYS.AVAILABLE_YEARS, JSON.stringify(availableAcademicYears));
       localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, isAdminLoggedIn ? "true" : "false");
       if (loggedInStudent) {
         localStorage.setItem(STORAGE_KEYS.STUDENT_AUTH, loggedInStudent.id);
@@ -285,6 +392,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     teachers,
     monthlyDues,
     messages,
+    teacherSalaries,
+    expenses,
+    selectedAcademicYear,
+    availableAcademicYears,
     isAdminLoggedIn,
     loggedInStudent,
     loggedInTeacher,
@@ -446,10 +557,107 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  const getDuesForStudent = (studentId: string): MonthlyDue[] => {
+  // Multi-Year Academic Calendar Actions
+  const ensureRecordsForAcademicYear = (year: string) => {
+    const cleanYear = year.trim();
+    if (!cleanYear) return;
+
+    setMonthlyDues((prev) => {
+      const hasDues = prev.some((d) => d.academicYear === cleanYear);
+      if (hasDues) return prev;
+      const newDues = generateDuesForYear(cleanYear, students);
+      return [...prev, ...newDues];
+    });
+
+    setTeacherSalaries((prev) => {
+      const hasSalaries = prev.some((s) => s.academicYear === cleanYear);
+      if (hasSalaries) return prev;
+      const newSalaries = generateSalariesForYear(cleanYear, teachers);
+      return [...prev, ...newSalaries];
+    });
+
+    setAvailableAcademicYears((prev) => {
+      if (prev.includes(cleanYear)) return prev;
+      return [...prev, cleanYear].sort();
+    });
+  };
+
+  const addNewAcademicYear = (year: string) => {
+    const cleanYear = year.trim();
+    if (!cleanYear) return;
+    ensureRecordsForAcademicYear(cleanYear);
+    setSelectedAcademicYear(cleanYear);
+  };
+
+  const getDuesForStudent = (studentId: string, academicYear?: string): MonthlyDue[] => {
     return monthlyDues
-      .filter((d) => d.studentId === studentId)
+      .filter((d) => d.studentId === studentId && (!academicYear || d.academicYear === academicYear))
       .sort((a, b) => a.monthIndex - b.monthIndex);
+  };
+
+  // Teacher Salary Actions
+  const updateSalaryStatus = (
+    id: string,
+    status: SalaryPaymentStatus,
+    details?: Partial<TeacherSalary>
+  ) => {
+    setTeacherSalaries((prev) =>
+      prev.map((sal) => {
+        if (sal.id !== id) return sal;
+        const nowStr = new Date().toISOString().split("T")[0];
+        const baseAmount = details?.amount !== undefined ? details.amount : sal.amount;
+        const bonus = details?.bonus !== undefined ? details.bonus : (sal.bonus || 0);
+        const deduction = details?.deduction !== undefined ? details.deduction : (sal.deduction || 0);
+        const netTotal = baseAmount + bonus - deduction;
+
+        return {
+          ...sal,
+          ...details,
+          status,
+          amount: baseAmount,
+          bonus,
+          deduction,
+          netTotal,
+          paidDate: status === "odendi" ? (details?.paidDate || sal.paidDate || nowStr) : undefined,
+          paymentMethod:
+            status === "odendi" ? (details?.paymentMethod || sal.paymentMethod || "Banka Transferi / EFT") : undefined,
+          dekontNo:
+            status === "odendi" ? (details?.dekontNo || sal.dekontNo || `BORD-${Date.now().toString().slice(-6)}`) : undefined,
+        };
+      })
+    );
+  };
+
+  const getSalariesForTeacher = (teacherId: string, academicYear?: string): TeacherSalary[] => {
+    return teacherSalaries
+      .filter((s) => s.teacherId === teacherId && (!academicYear || s.academicYear === academicYear))
+      .sort((a, b) => a.monthIndex - b.monthIndex);
+  };
+
+  // Kindergarten Expense Actions
+  const addExpense = (expenseData: Omit<KindergartenExpense, "id" | "createdAt">) => {
+    const assignedYear =
+      expenseData.academicYear ||
+      getAcademicYearFromDate(expenseData.date) ||
+      selectedAcademicYear;
+
+    const newExpense: KindergartenExpense = {
+      ...expenseData,
+      academicYear: assignedYear,
+      id: `exp-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setExpenses((prev) => [newExpense, ...prev]);
+  };
+
+  const updateExpense = (id: string, updated: Partial<KindergartenExpense>) => {
+    setExpenses((prev) =>
+      prev.map((exp) => (exp.id === id ? { ...exp, ...updated } : exp))
+    );
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses((prev) => prev.filter((exp) => exp.id !== id));
   };
 
   // Student Actions
@@ -647,6 +855,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTeachers(INITIAL_TEACHERS);
     setMonthlyDues(INITIAL_DUES);
     setMessages(INITIAL_MESSAGES);
+    setTeacherSalaries(INITIAL_TEACHER_SALARIES);
+    setExpenses(INITIAL_EXPENSES);
     setIsAdminLoggedIn(false);
     setLoggedInStudent(null);
     setLoggedInTeacher(null);
@@ -670,6 +880,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         monthlyDues,
         loggedInTeacher,
         messages,
+        teacherSalaries,
+        expenses,
+        selectedAcademicYear,
+        setSelectedAcademicYear,
+        availableAcademicYears,
+        addNewAcademicYear,
+        ensureRecordsForAcademicYear,
+        addExpense,
+        updateExpense,
+        deleteExpense,
+        updateSalaryStatus,
+        getSalariesForTeacher,
         sendMessage,
         markMessagesAsRead,
         getMessagesForStudent,

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
-import { MealStatus, MoodType } from "@/types";
+import { MealStatus, MoodType, TeacherSalary } from "@/types";
 import {
   GraduationCap,
   Calendar,
@@ -19,6 +19,11 @@ import {
   Send,
   CheckCheck,
   ShieldCheck,
+  Receipt,
+  CheckCircle2,
+  Building2,
+  Printer,
+  Briefcase,
 } from "lucide-react";
 
 export default function OgretmenDashboard() {
@@ -39,9 +44,22 @@ export default function OgretmenDashboard() {
     getMessagesForStudent,
     getUnreadCountForStudent,
     getUnreadCountForClassTeacher,
+    getSalariesForTeacher,
+    selectedAcademicYear,
+    availableAcademicYears,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<"karne" | "etkinlikler" | "saglik" | "mesajlar">("karne");
+  const [activeTab, setActiveTab] = useState<"karne" | "etkinlikler" | "saglik" | "mesajlar" | "maas">("karne");
+  const [teacherYear, setTeacherYear] = useState<string>(selectedAcademicYear || "2026-2027");
+
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      setTeacherYear(selectedAcademicYear);
+    }
+  }, [selectedAcademicYear]);
+
+  // Salary Slip Modal State
+  const [viewingSalarySlip, setViewingSalarySlip] = useState<TeacherSalary | null>(null);
 
   // Chat State
   const [selectedChatStudentId, setSelectedChatStudentId] = useState<string | null>(null);
@@ -82,10 +100,14 @@ export default function OgretmenDashboard() {
   const myClass = loggedInTeacher ? classes.find((c) => c.id === loggedInTeacher.classId) : undefined;
 
   // STRICT ISOLATION: Filter only students belonging to this teacher's class
-  const myStudents = loggedInTeacher ? students.filter((s) => s.classId === loggedInTeacher.classId) : [];
+  const myStudents = useMemo(() => {
+    return loggedInTeacher ? students.filter((s) => s.classId === loggedInTeacher.classId) : [];
+  }, [loggedInTeacher, students]);
 
   // STRICT ISOLATION: Filter only activities belonging to this teacher's class
-  const myActivities = loggedInTeacher ? activities.filter((a) => a.classId === loggedInTeacher.classId) : [];
+  const myActivities = useMemo(() => {
+    return loggedInTeacher ? activities.filter((a) => a.classId === loggedInTeacher.classId) : [];
+  }, [loggedInTeacher, activities]);
 
   // Chat: Total unread messages for this teacher's class
   const unreadTotalForClass = loggedInTeacher ? getUnreadCountForClassTeacher(loggedInTeacher.classId) : 0;
@@ -109,6 +131,27 @@ export default function OgretmenDashboard() {
 
   // Current chat messages for selected student
   const currentChatMessages = selectedChatStudent ? getMessagesForStudent(selectedChatStudent.id) : [];
+
+  // STRICT ISOLATION: Teacher's own salaries for chosen academic year
+  const mySalaries = useMemo(() => {
+    return loggedInTeacher ? getSalariesForTeacher(loggedInTeacher.id, teacherYear) : [];
+  }, [loggedInTeacher, getSalariesForTeacher, teacherYear]);
+
+  const mySalarySummary = useMemo(() => {
+    const totalContract = mySalaries.reduce((acc, s) => acc + s.netTotal, 0);
+    const paidList = mySalaries.filter((s) => s.status === "odendi");
+    const totalPaid = paidList.reduce((acc, s) => acc + s.netTotal, 0);
+    const unpaidList = mySalaries.filter((s) => s.status === "odenmedi");
+    const totalUnpaid = unpaidList.reduce((acc, s) => acc + s.netTotal, 0);
+
+    return {
+      totalContract,
+      totalPaid,
+      totalUnpaid,
+      paidCount: paidList.length,
+      unpaidCount: unpaidList.length,
+    };
+  }, [mySalaries]);
 
   // Send message handler
   const handleSendTeacherMessage = (e?: React.FormEvent) => {
@@ -398,6 +441,18 @@ export default function OgretmenDashboard() {
                 {unreadTotalForClass}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("maas")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+              activeTab === "maas"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Receipt className="w-4 h-4" />
+            <span>Maaş & Bordro Bilgilerim</span>
           </button>
         </div>
       </div>
@@ -977,6 +1032,274 @@ export default function OgretmenDashboard() {
             </div>
           </div>
         )}
+
+        {/* TAB 5: TEACHER SALARIES & PAYROLL */}
+        {activeTab === "maas" && (
+          <div className="space-y-6">
+            {/* Header Banner with Security / Privacy Guarantee */}
+            <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <span>Gizlilik Korumalı Kişisel Maaş Portalı</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+                    Maaş, Hak Ediş & Bordro Bilgilerim
+                  </h2>
+                  <p className="text-xs sm:text-sm text-purple-200 max-w-2xl leading-relaxed">
+                    Kurumumuz tarafından adınıza tahakkuk ettirilen aylık taban maaş, ek ders & prim ödemeleri ile banka dekont dökümleriniz burada listelenir. Bu kayıtlar KVKK ve kurumsal gizlilik ilkeleri uyarınca yalnızca sizin erişiminize açıktır.
+                  </p>
+                </div>
+
+                <div className="shrink-0 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex flex-col gap-1 text-right">
+                  <div className="flex items-center justify-end gap-1.5 text-xs text-purple-200 font-medium">
+                    <Building2 className="w-3.5 h-3.5 text-purple-300" />
+                    <span>Maaş Ödeme Günü</span>
+                  </div>
+                  <div className="text-lg font-black text-amber-300">
+                    Her Ayın 15&apos;i
+                  </div>
+                  <div className="text-[10px] text-purple-300">
+                    T.C. Ziraat Bankası A.Ş.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4 Summary Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-black">
+                  <Briefcase className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-slate-400 block uppercase">
+                    Sözleşmeli Taban Maaş
+                  </span>
+                  <div className="text-xl font-black text-slate-900">
+                    {(loggedInTeacher.baseSalary || 42000).toLocaleString("tr-TR")} ₺
+                  </div>
+                  <span className="text-[10px] font-bold text-purple-600">
+                    Aylık Net Tutar
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-slate-400 block uppercase">
+                    Bu Dönem Ödenen Toplam
+                  </span>
+                  <div className="text-xl font-black text-emerald-600">
+                    {mySalarySummary.totalPaid.toLocaleString("tr-TR")} ₺
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700">
+                    {mySalarySummary.paidCount} Ay Tahsil Edildi
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-slate-400 block uppercase">
+                    Bekleyen / Gelecek Maaş
+                  </span>
+                  <div className="text-xl font-black text-amber-600">
+                    {mySalarySummary.totalUnpaid.toLocaleString("tr-TR")} ₺
+                  </div>
+                  <span className="text-[10px] font-bold text-amber-700">
+                    {mySalarySummary.unpaidCount} Ay Ödeme Bekliyor
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-black">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[11px] font-bold text-slate-400 block uppercase truncate">
+                    Kayıtlı Maaş Hesabı
+                  </span>
+                  <div className="text-xs font-black text-slate-800 font-mono truncate" title={loggedInTeacher.iban}>
+                    {loggedInTeacher.iban || "TR12 0001 0090 1234 5678 5001"}
+                  </div>
+                  <span className="text-[10px] font-bold text-sky-600 block truncate">
+                    Ziraat Bankası - Vadesiz TL
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Salary List Table / Cards */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                      <Receipt className="w-5 h-5 text-purple-600" />
+                      <span>{teacherYear} Eğitim Öğretim Yılı Maaş Çizelgesi</span>
+                    </h3>
+                    {teacherYear === "2026-2027" ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                        📁 2026 Arşiv Kayıtları
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-300">
+                        🌟 {teacherYear} Dönemi
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium">
+                    10 aylık eğitim-öğretim dönemi maaş ve bordro durum dökümü (Geçmiş yıllar eksiksiz saklanır)
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {/* Academic Year Selector for Teacher */}
+                  <div className="bg-white p-1 rounded-2xl flex items-center gap-1.5 border border-purple-200 shadow-xs">
+                    <span className="text-[11px] font-black uppercase text-purple-900 pl-2 flex items-center gap-1">
+                      <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Dönem:</span>
+                    </span>
+                    <select
+                      value={teacherYear}
+                      onChange={(e) => setTeacherYear(e.target.value)}
+                      className="bg-purple-50 hover:bg-purple-100/80 text-purple-950 font-black text-xs py-1.5 px-3 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-400 cursor-pointer transition-colors"
+                    >
+                      {availableAcademicYears.map((yr) => (
+                        <option key={yr} value={yr}>
+                          {yr} {yr === "2026-2027" ? "(2026 Kayıtları)" : yr === "2029-2030" ? "(2029 Dönemi)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                    {mySalarySummary.paidCount} Ay Ödendi
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-amber-100 text-amber-800">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    {mySalarySummary.unpaidCount} Ay Bekliyor
+                  </span>
+                </div>
+              </div>
+
+              {/* Grid of Salary Cards */}
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {mySalaries.map((salary) => {
+                  const isPaid = salary.status === "odendi";
+                  return (
+                    <div
+                      key={salary.id}
+                      className={`p-5 rounded-3xl border-2 transition-all hover:shadow-md ${
+                        isPaid
+                          ? "bg-gradient-to-br from-white to-emerald-50/40 border-emerald-200/80"
+                          : "bg-gradient-to-br from-white to-amber-50/40 border-amber-200/80"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            Maaş Dönemi
+                          </div>
+                          <div className="text-lg font-black text-slate-900">
+                            {salary.month}
+                          </div>
+                        </div>
+
+                        {isPaid ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-white shadow-xs">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>ÖDENDİ</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-500 text-white shadow-xs">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>ÖDEME BEKLENİYOR</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Amounts Breakdown */}
+                      <div className="bg-white/80 backdrop-blur-xs p-3.5 rounded-2xl border border-slate-200/60 mb-3 space-y-2 text-xs">
+                        <div className="flex justify-between text-slate-600 font-medium">
+                          <span>Taban Maaş:</span>
+                          <span className="font-bold text-slate-800">
+                            {salary.amount.toLocaleString("tr-TR")} ₺
+                          </span>
+                        </div>
+                        {salary.bonus ? (
+                          <div className="flex justify-between text-emerald-600 font-medium">
+                            <span>Ek Ders & Performans Primi:</span>
+                            <span className="font-bold">+{salary.bonus.toLocaleString("tr-TR")} ₺</span>
+                          </div>
+                        ) : null}
+                        {salary.deduction ? (
+                          <div className="flex justify-between text-rose-600 font-medium">
+                            <span>Yasal / İdari Kesinti:</span>
+                            <span className="font-bold">-{salary.deduction.toLocaleString("tr-TR")} ₺</span>
+                          </div>
+                        ) : null}
+                        <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-black text-slate-900">
+                          <span>Net Ödenen Tutar:</span>
+                          <span className={`text-base ${isPaid ? "text-emerald-700" : "text-amber-700"}`}>
+                            {salary.netTotal.toLocaleString("tr-TR")} ₺
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Payment info metadata */}
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 mb-4 px-1">
+                        {isPaid ? (
+                          <div className="space-y-0.5">
+                            <div>
+                              <strong className="text-slate-700">Ödeme Tarihi:</strong> {salary.paidDate}
+                            </div>
+                            <div>
+                              <strong className="text-slate-700">Bordro/Dekont:</strong> {salary.dekontNo || `BNK-${salary.id}`}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-0.5">
+                            <div>
+                              <strong className="text-slate-700">Son Ödeme Günü:</strong> {salary.dueDate}
+                            </div>
+                            <div className="text-amber-700 font-medium">
+                              Hesabınıza otomatik aktarılacaktır
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        type="button"
+                        onClick={() => setViewingSalarySlip(salary)}
+                        className={`w-full py-2.5 px-4 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs ${
+                          isPaid
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "bg-slate-800 hover:bg-slate-900 text-white"
+                        }`}
+                      >
+                        <Receipt className="w-4 h-4" />
+                        <span>Bordro Dökümü & Dekont İncele</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Daily Report Editor Modal */}
@@ -1131,6 +1454,173 @@ export default function OgretmenDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Official Salary / Payroll Slip Modal */}
+      {viewingSalarySlip && loggedInTeacher && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border-2 border-purple-200 space-y-6 animate-in fade-in zoom-in duration-200 max-h-[95vh] overflow-y-auto">
+            {/* Slip Header */}
+            <div className="flex items-start justify-between border-b-2 border-slate-900 pb-4">
+              <div>
+                <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest block mb-0.5">
+                  T.C. MİLLÎ EĞİTİM BAKANLIĞI
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-slate-900">
+                  ÖZEL MASAL DİYARI ANAOKULU & KREŞİ
+                </h3>
+                <p className="text-[11px] font-bold text-slate-500">
+                  Resmî Personel Maaş Bordrosu & Hak Ediş Belgesi
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingSalarySlip(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Personnel & Period Info */}
+            <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">
+                  Personel Adı Soyadı
+                </span>
+                <span className="font-black text-slate-900 text-sm block">
+                  {loggedInTeacher.name}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">
+                  Görevi / Branşı
+                </span>
+                <span className="font-bold text-slate-800 block">
+                  {loggedInTeacher.title} ({myClass?.name || "Öğretmen"})
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">
+                  Bordro Dönemi
+                </span>
+                <span className="font-black text-purple-700 block">
+                  {viewingSalarySlip.month}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">
+                  Bordro / Dekont Takip No
+                </span>
+                <span className="font-mono font-bold text-slate-800 block">
+                  {viewingSalarySlip.dekontNo || `BRD-2026-${viewingSalarySlip.id}`}
+                </span>
+              </div>
+              <div className="col-span-2 pt-2 border-t border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">
+                  Ödeme Yapılan Maaş Hesabı (IBAN)
+                </span>
+                <span className="font-mono font-bold text-slate-800 block">
+                  {loggedInTeacher.iban || "TR12 0001 0090 1234 5678 5001"} (T.C. Ziraat Bankası)
+                </span>
+              </div>
+            </div>
+
+            {/* Breakdown Table */}
+            <div className="border border-slate-200 rounded-2xl overflow-hidden text-xs">
+              <div className="bg-slate-100 p-3 font-black text-slate-800 flex justify-between border-b border-slate-200">
+                <span>KALEM AÇIKLAMASI</span>
+                <span>TUTAR (TL)</span>
+              </div>
+              <div className="p-3.5 space-y-2.5">
+                <div className="flex justify-between font-medium text-slate-700">
+                  <span>Aylık Sözleşmeli Taban Maaş</span>
+                  <span className="font-bold font-mono">
+                    {viewingSalarySlip.amount.toLocaleString("tr-TR")} ₺
+                  </span>
+                </div>
+                {viewingSalarySlip.bonus ? (
+                  <div className="flex justify-between font-medium text-emerald-700">
+                    <span>Ek Ders, Nöbet & Başarı Primi</span>
+                    <span className="font-bold font-mono">
+                      +{viewingSalarySlip.bonus.toLocaleString("tr-TR")} ₺
+                    </span>
+                  </div>
+                ) : null}
+                {viewingSalarySlip.deduction ? (
+                  <div className="flex justify-between font-medium text-rose-700">
+                    <span>Yasal SGK & Bireysel Kesintiler</span>
+                    <span className="font-bold font-mono">
+                      -{viewingSalarySlip.deduction.toLocaleString("tr-TR")} ₺
+                    </span>
+                  </div>
+                ) : null}
+                <div className="pt-3 border-t-2 border-slate-900 flex justify-between items-center text-sm font-black text-slate-900 bg-purple-50/50 -mx-3.5 -mb-3.5 p-3.5">
+                  <span>NET ELE GEÇEN MAAŞ:</span>
+                  <span className="text-base text-purple-700 font-mono">
+                    {viewingSalarySlip.netTotal.toLocaleString("tr-TR")} ₺
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Status & Official Seal */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase mb-1">
+                  Ödeme & Onay Durumu
+                </span>
+                {viewingSalarySlip.status === "odendi" ? (
+                  <div className="flex items-center gap-1.5 text-emerald-700 font-black">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>ÖDENDİ - {viewingSalarySlip.paidDate} (Banka Havalesi)</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-amber-700 font-black">
+                    <Clock className="w-4 h-4" />
+                    <span>ÖDEME BEKLENİYOR - Vade: {viewingSalarySlip.dueDate}</span>
+                  </div>
+                )}
+                {viewingSalarySlip.notes && (
+                  <p className="text-[11px] text-slate-500 italic mt-1">
+                    Not: {viewingSalarySlip.notes}
+                  </p>
+                )}
+              </div>
+
+              <div className="text-center sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-4">
+                <div className="text-[10px] text-slate-400 font-bold uppercase">
+                  Kurum Kaşe / Elektronik Onay
+                </div>
+                <div className="text-xs font-black text-slate-700 mt-1">
+                  Özel Masal Diyarı Muhasebe
+                </div>
+                <div className="text-[10px] text-slate-400">
+                  E-Bordro Doğrulama Kodu: {viewingSalarySlip.id.toUpperCase()}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setViewingSalarySlip(null)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                Kapat
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Yazdır / PDF Olarak Kaydet</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

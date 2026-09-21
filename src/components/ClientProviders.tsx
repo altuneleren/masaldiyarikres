@@ -2,7 +2,12 @@
 
 import React from "react";
 import { AppProvider } from "@/context/AppContext";
+import SourceProtectionProvider from "@/components/SourceProtectionProvider";
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
-  return <AppProvider>{children}</AppProvider>;
+  return (
+    <AppProvider>
+      <SourceProtectionProvider>{children}</SourceProtectionProvider>
+    </AppProvider>
+  );
 }

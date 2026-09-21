@@ -1,0 +1,19 @@
+================================================================================
+YASAL TELİF HAKKI VE KAYNAK KOD KORUMA BİLDİRİMİ
+================================================================================
+Hak Sahibi Kurum: Masal Diyarı Kreş ve Gündüz Bakımevi
+Adres: 55evler mahallesi Hilmi, Ellibeşevler, Cevdet Topçu Sk. 19/A, 05100 Amasya Merkez/Amasya
+
+Bu web uygulamasına ait tüm yazılım mimarisi, tasarım unsurları, veritabanı şemaları,
+görseller ve kaynak kodlar Türkiye Cumhuriyeti 5846 sayılı Fikir ve Sanat Eserleri
+Kanunu (FSEK) ile ilgili uluslararası telif hakları sözleşmeleri kapsamında yasal
+koruma altındadır.
+
+TÜM HAKLARI SAKLIDIR.
+
+Kurumun yazılı ve açık izni olmaksızın;
+- Kaynak kodların incelenmesi, kopyalanması, tersine mühendisliğe tabi tutulması,
+- Kodların veya tasarımın başka projelerde kısmen veya tamamen kullanılması,
+- Ticari veya gayriticari amaçla çoğaltılması ve dağıtılması
+kesinlikle yasaktır ve ilgililer hakkında hukuki ve cezai takibat başlatılacaktır.
+================================================================================

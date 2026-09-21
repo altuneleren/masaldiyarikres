@@ -104,10 +104,23 @@ export default function Footer() {
           <div className="space-y-3">
             <h4 className="text-white font-extrabold text-base">İletişim & Ziyaret</h4>
             <div className="space-y-2.5 text-sm text-slate-400">
-              <p className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <span>Masal Mahallesi, Sevgi Caddesi No: 42, Ataşehir / İstanbul</span>
-              </p>
+                <a
+                  href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x40876f4603e8cdaf:0x7891a2fe6cb73672?sa=X&ved=1t:8290&ictx=111"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-amber-400 transition-colors leading-relaxed block group"
+                  title="Google Haritalar'da Aç ve Yol Tarifi Al"
+                >
+                  <span className="group-hover:underline">
+                    55evler mahallesi Hilmi, Ellibeşevler, Cevdet Topçu Sk. 19/A, 05100 Amasya Merkez/Amasya
+                  </span>
+                  <span className="block text-[11px] text-amber-400 font-bold mt-1">
+                    📍 Google Haritalar&apos;da Aç & Yol Tarifi Al ↗
+                  </span>
+                </a>
+              </div>
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
                 <span>0 (212) 555 12 34 / 0 (532) 999 88 77</span>
@@ -124,14 +137,21 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} Masal Diyarı Kreş ve Gündüz Bakımevi. Tüm Hakları Saklıdır.</p>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              Sevgiyle tasarlandı <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
-            </span>
-            <span>•</span>
-            <Link href="/admin" className="text-slate-400 hover:text-white underline">
+        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          {/* Left: Copyright */}
+          <p className="order-2 md:order-1 md:flex-1 text-center md:text-left">
+            © {new Date().getFullYear()} Masal Diyarı Kreş ve Gündüz Bakımevi. Tüm Hakları Saklıdır.
+          </p>
+
+          {/* Center: Sevgiyle Tasarlandı */}
+          <div className="order-1 md:order-2 flex items-center justify-center gap-1.5 text-slate-400 font-medium px-4 py-1.5 rounded-full bg-slate-800/60 border border-slate-700/60 shadow-xs">
+            <span>Sevgiyle tasarlandı</span>
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
+          </div>
+
+          {/* Right: Admin Link */}
+          <div className="order-3 md:order-3 md:flex-1 flex items-center justify-center md:justify-end gap-3">
+            <Link href="/admin" className="text-slate-400 hover:text-white underline underline-offset-2 transition-colors">
               Admin Girişi
             </Link>
           </div>

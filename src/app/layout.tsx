@@ -17,6 +17,13 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Masal Diyarı Kreş & Gündüz Bakımevi | Sevgiyle Büyüyen Minik Kalpler",
   description: "1 - 6 Yaş grubu sınıflar, organik beslenme, uzman pedagoglar, zengin etkinlikler ve veli bilgilendirme sistemi ile Masal Diyarı Kreş.",
+  authors: [{ name: "Masal Diyarı Kreş ve Gündüz Bakımevi" }],
+  creator: "Masal Diyarı Kreş",
+  publisher: "Masal Diyarı Kreş",
+  other: {
+    copyright: "© 2026 Masal Diyarı Kreş ve Gündüz Bakımevi. Tüm Hakları Saklıdır. (5846 Sayılı FSEK)",
+    "rights-protected": "true",
+  },
 };
 
 export default function RootLayout({

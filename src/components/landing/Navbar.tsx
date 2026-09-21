@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Sparkles, HeartHandshake, ShieldCheck, Phone, Clock, Menu, X, UserCircle, Settings, GraduationCap } from "lucide-react";
+import { Sparkles, HeartHandshake, ShieldCheck, Phone, Clock, Menu, X, UserCircle, Settings, GraduationCap, MapPin } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export default function Navbar() {
@@ -23,6 +23,16 @@ export default function Navbar() {
               <Clock className="w-3.5 h-3.5" />
               <span>Hafta İçi: 07:30 - 18:30</span>
             </span>
+            <a
+              href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x40876f4603e8cdaf:0x7891a2fe6cb73672?sa=X&ved=1t:8290&ictx=111"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden lg:flex items-center gap-1 hover:text-amber-100 transition-colors underline-offset-2 hover:underline"
+              title="Amasya Merkez Kampüsümüz - Google Haritalar"
+            >
+              <MapPin className="w-3.5 h-3.5 text-amber-200" />
+              <span>Amasya Merkez</span>
+            </a>
           </div>
           <div className="flex items-center space-x-3 text-amber-50">
             <span className="flex items-center gap-1">
