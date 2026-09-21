@@ -151,8 +151,6 @@ Minik yavrunuzun mutlu, özgüvenli ve sevgi dolu bir ortamda büyümesi için s
 - **Adres**: 55evler mahallesi Hilmi, Ellibeşevler, Cevdet Topçu Sk. 19/A, 05100 Amasya Merkez/Amasya
 - **Yol Tarifi**: [Google Haritalar'da Aç ↗](https://www.google.com/maps/place//data=!4m2!3m1!1s0x40876f4603e8cdaf:0x7891a2fe6cb73672?sa=X&ved=1t:8290&ictx=111)
 - **Telefon**: 0 (212) 555 12 34 / 0 (532) 999 88 77
-- **Web Sitesi**: [http://localhost:3000](http://localhost:3000)
-- **Veli Portalı**: [http://localhost:3000/veli](http://localhost:3000/veli)
 
 ---
 
