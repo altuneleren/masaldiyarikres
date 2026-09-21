@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
@@ -11,11 +11,14 @@ import {
   Smile,
   LogOut,
   Heart,
-  Phone,
   Plus,
   Trash2,
   Clock,
   X,
+  MessageCircle,
+  Send,
+  CheckCheck,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function OgretmenDashboard() {
@@ -30,9 +33,19 @@ export default function OgretmenDashboard() {
     activities,
     addActivity,
     deleteActivity,
+    messages,
+    sendMessage,
+    markMessagesAsRead,
+    getMessagesForStudent,
+    getUnreadCountForStudent,
+    getUnreadCountForClassTeacher,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<"karne" | "etkinlikler" | "saglik">("karne");
+  const [activeTab, setActiveTab] = useState<"karne" | "etkinlikler" | "saglik" | "mesajlar">("karne");
+
+  // Chat State
+  const [selectedChatStudentId, setSelectedChatStudentId] = useState<string | null>(null);
+  const [chatInputText, setChatInputText] = useState("");
 
   // Daily Report Modal / Editor State
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
@@ -65,6 +78,56 @@ export default function OgretmenDashboard() {
     }, 4000);
   };
 
+  // Teacher's Assigned Class
+  const myClass = loggedInTeacher ? classes.find((c) => c.id === loggedInTeacher.classId) : undefined;
+
+  // STRICT ISOLATION: Filter only students belonging to this teacher's class
+  const myStudents = loggedInTeacher ? students.filter((s) => s.classId === loggedInTeacher.classId) : [];
+
+  // STRICT ISOLATION: Filter only activities belonging to this teacher's class
+  const myActivities = loggedInTeacher ? activities.filter((a) => a.classId === loggedInTeacher.classId) : [];
+
+  // Chat: Total unread messages for this teacher's class
+  const unreadTotalForClass = loggedInTeacher ? getUnreadCountForClassTeacher(loggedInTeacher.classId) : 0;
+
+  // Selected Chat Student
+  const selectedChatStudent = myStudents.find((s) => s.id === selectedChatStudentId) || myStudents[0] || null;
+
+  // Auto select initial chat student on mount
+  useEffect(() => {
+    if (!selectedChatStudentId && myStudents.length > 0) {
+      setSelectedChatStudentId(myStudents[0].id);
+    }
+  }, [myStudents, selectedChatStudentId]);
+
+  // Auto mark messages as read when viewing chat tab
+  useEffect(() => {
+    if (activeTab === "mesajlar" && selectedChatStudent) {
+      markMessagesAsRead(selectedChatStudent.id, "teacher");
+    }
+  }, [activeTab, selectedChatStudent, messages, markMessagesAsRead]);
+
+  // Current chat messages for selected student
+  const currentChatMessages = selectedChatStudent ? getMessagesForStudent(selectedChatStudent.id) : [];
+
+  // Send message handler
+  const handleSendTeacherMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInputText.trim() || !selectedChatStudent || !loggedInTeacher) return;
+
+    sendMessage({
+      studentId: selectedChatStudent.id,
+      classId: loggedInTeacher.classId,
+      senderType: "teacher",
+      senderName: `${loggedInTeacher.name} (Öğretmen)`,
+      senderAvatar: loggedInTeacher.avatar,
+      text: chatInputText.trim(),
+    });
+
+    setChatInputText("");
+    markMessagesAsRead(selectedChatStudent.id, "teacher");
+  };
+
   // Redirect if not logged in
   if (!loggedInTeacher) {
     return (
@@ -89,15 +152,6 @@ export default function OgretmenDashboard() {
       </div>
     );
   }
-
-  // Teacher's Assigned Class
-  const myClass = classes.find((c) => c.id === loggedInTeacher.classId);
-
-  // STRICT ISOLATION: Filter only students belonging to this teacher's class
-  const myStudents = students.filter((s) => s.classId === loggedInTeacher.classId);
-
-  // STRICT ISOLATION: Filter only activities belonging to this teacher's class
-  const myActivities = activities.filter((a) => a.classId === loggedInTeacher.classId);
 
   // Handle open report modal for a student
   const handleOpenReportModal = (studentId: string) => {
@@ -322,6 +376,28 @@ export default function OgretmenDashboard() {
           >
             <Heart className="w-4 h-4" />
             <span>Sağlık, Alerji & Veli İletişim</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab("mesajlar");
+              if (selectedChatStudent) {
+                markMessagesAsRead(selectedChatStudent.id, "teacher");
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all relative ${
+              activeTab === "mesajlar"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>Veli Sohbetleri (Chat)</span>
+            {unreadTotalForClass > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                {unreadTotalForClass}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -642,17 +718,24 @@ export default function OgretmenDashboard() {
 
                   {/* Parent Contacts */}
                   <div className="pt-2 border-t border-slate-100 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600 font-medium">
+                    <div className="flex items-center justify-between text-xs gap-2">
+                      <span className="text-slate-600 font-medium truncate">
                         Veli: <strong>{student.parentName}</strong>
                       </span>
-                      <a
-                        href={`tel:${student.parentPhone}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold hover:bg-emerald-100 transition-colors"
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                        <span>{student.parentPhone}</span>
-                      </a>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => {
+                            setSelectedChatStudentId(student.id);
+                            setActiveTab("mesajlar");
+                            markMessagesAsRead(student.id, "teacher");
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 font-bold hover:bg-purple-100 transition-colors text-[11px]"
+                          title="Telefon gerekmeden panelden mesajlaşın"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 text-purple-600" />
+                          <span>Mesajlaş</span>
+                        </button>
+                      </div>
                     </div>
 
                     {student.emergencyContact && (
@@ -666,6 +749,231 @@ export default function OgretmenDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: VELİ SOHBETLERİ & MESAJLAŞMA */}
+        {activeTab === "mesajlar" && (
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row min-h-[600px] max-h-[750px] animate-in fade-in">
+            {/* Left Column: Student & Parent List */}
+            <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col bg-slate-50/50">
+              <div className="p-4 border-b border-slate-200 bg-white">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-black text-slate-900 text-sm flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-purple-600" />
+                    <span>Sınıf Veli Sohbetleri</span>
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800">
+                    {myStudents.length} Veli
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 font-medium leading-relaxed">
+                  🔒 Telefon numarası gerekmeden velilerinizle doğrudan panelden yazışabilirsiniz.
+                </p>
+              </div>
+
+              <div className="overflow-y-auto flex-1 divide-y divide-slate-100">
+                {myStudents.map((stu) => {
+                  const isSelected = selectedChatStudent?.id === stu.id;
+                  const stuMessages = getMessagesForStudent(stu.id);
+                  const lastMsg = stuMessages[stuMessages.length - 1];
+                  const unreadCount = getUnreadCountForStudent(stu.id, "teacher");
+
+                  return (
+                    <button
+                      key={stu.id}
+                      onClick={() => {
+                        setSelectedChatStudentId(stu.id);
+                        markMessagesAsRead(stu.id, "teacher");
+                      }}
+                      className={`w-full p-3.5 flex items-start gap-3 text-left transition-colors ${
+                        isSelected
+                          ? "bg-purple-50/80 border-l-4 border-purple-600"
+                          : "hover:bg-slate-100/70"
+                      }`}
+                    >
+                      <div className="relative shrink-0">
+                        <img
+                          src={stu.avatar}
+                          alt={stu.name}
+                          className="w-11 h-11 rounded-2xl object-cover border border-slate-200 shadow-xs"
+                        />
+                        <span className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white absolute -bottom-0.5 -right-0.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black text-slate-900 truncate">
+                            {stu.name} {stu.surname}
+                          </h4>
+                          {lastMsg && (
+                            <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-1">
+                              {lastMsg.timestamp}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] font-bold text-purple-700 truncate mt-0.5">
+                          {stu.parentName}
+                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-[11px] text-slate-500 truncate max-w-[170px]">
+                            {lastMsg ? lastMsg.text : "Henüz mesaj yok"}
+                          </p>
+                          {unreadCount > 0 && (
+                            <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-black flex items-center justify-center shrink-0">
+                              {unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Column: Chat Room */}
+            <div className="flex-1 flex flex-col bg-white">
+              {selectedChatStudent ? (
+                <>
+                  {/* Chat Header */}
+                  <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={selectedChatStudent.avatar}
+                        alt={selectedChatStudent.name}
+                        className="w-10 h-10 rounded-2xl object-cover border border-slate-200 shadow-xs"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-black text-slate-900 leading-tight">
+                            {selectedChatStudent.name} {selectedChatStudent.surname}
+                          </h4>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                            ● Çevrimiçi
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Veli: <span className="font-bold text-slate-800">{selectedChatStudent.parentName}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Privacy badge */}
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 text-purple-800 border border-purple-200 text-xs font-bold">
+                      <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0" />
+                      <span className="hidden sm:inline">Gizlilik Korumalı: Numarasız İletişim</span>
+                      <span className="sm:hidden">Numarasız</span>
+                    </div>
+                  </div>
+
+                  {/* Messages Stream */}
+                  <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-3.5 bg-slate-50/60">
+                    {/* Security Info Card */}
+                    <div className="mx-auto max-w-lg p-3 rounded-2xl bg-amber-50/80 border border-amber-200 text-center space-y-1 text-xs">
+                      <p className="font-black text-amber-900 flex items-center justify-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-amber-600" />
+                        <span>Panel İçi Güvenli Mesajlaşma Odası</span>
+                      </p>
+                      <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
+                        Öğretmen ve veli iletişiminde şahsi telefon numarası gerekmez. Tüm diyaloglar okul güvencesiyle panel üzerinden yürütülür.
+                      </p>
+                    </div>
+
+                    {currentChatMessages.length === 0 ? (
+                      <div className="py-12 text-center text-slate-400 space-y-2">
+                        <MessageCircle className="w-10 h-10 mx-auto text-slate-300" />
+                        <p className="text-xs font-bold">Henüz mesajlaşma bulunmuyor.</p>
+                        <p className="text-[11px]">Veliye ilk mesajı yazarak iletişimi başlatabilirsiniz.</p>
+                      </div>
+                    ) : (
+                      currentChatMessages.map((msg) => {
+                        const isTeacher = msg.senderType === "teacher";
+                        return (
+                          <div
+                            key={msg.id}
+                            className={`flex flex-col ${isTeacher ? "items-end" : "items-start"}`}
+                          >
+                            <div
+                              className={`max-w-[85%] sm:max-w-md p-3.5 rounded-3xl text-xs shadow-xs space-y-1 ${
+                                isTeacher
+                                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-tr-xs"
+                                  : "bg-white border border-slate-200 text-slate-900 rounded-tl-xs"
+                              }`}
+                            >
+                              <p className={`font-extrabold text-[10px] ${isTeacher ? "text-purple-200" : "text-purple-700"}`}>
+                                {msg.senderName}
+                              </p>
+                              <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap">
+                                {msg.text}
+                              </p>
+                              <div
+                                className={`flex items-center justify-end gap-1 text-[10px] pt-1 ${
+                                  isTeacher ? "text-purple-200" : "text-slate-400"
+                                }`}
+                              >
+                                <span>{msg.timestamp}</span>
+                                {isTeacher && (
+                                  <CheckCheck className={`w-3.5 h-3.5 ${msg.read ? "text-sky-300" : "text-white/60"}`} />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Quick Response Chips */}
+                  <div className="p-2.5 bg-white border-t border-slate-100 overflow-x-auto flex items-center gap-2 shrink-0">
+                    <span className="text-[10px] font-bold text-slate-400 shrink-0 uppercase tracking-wider pl-2">
+                      Hızlı Şablon:
+                    </span>
+                    {[
+                      "Merhaba, durumu gayet iyi ve neşeli 😊",
+                      "Bilgilendirme için teşekkürler, notumu aldım.",
+                      "Öğle yemeğini ve meyvesini afiyetle yedi 🥣",
+                      "İlaç saati geldiğinde içirdim, merak etmeyiniz.",
+                      "Gününüz güzel geçsin, çıkışta görüşmek üzere!",
+                    ].map((tmpl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setChatInputText(tmpl)}
+                        className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-800 text-[11px] font-bold whitespace-nowrap transition-colors border border-slate-200"
+                      >
+                        {tmpl}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Message Input Bar */}
+                  <form
+                    onSubmit={handleSendTeacherMessage}
+                    className="p-3 sm:p-4 bg-white border-t border-slate-200 flex items-center gap-2"
+                  >
+                    <input
+                      type="text"
+                      value={chatInputText}
+                      onChange={(e) => setChatInputText(e.target.value)}
+                      placeholder={`${selectedChatStudent.parentName} velisine mesajınızı yazın... (Numaranız gizlidir)`}
+                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!chatInputText.trim()}
+                      className="px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Gönder</span>
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center p-8 text-center text-slate-400">
+                  Sohbete başlamak için soldan bir veli seçiniz.
+                </div>
+              )}
             </div>
           </div>
         )}

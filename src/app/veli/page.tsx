@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
 import {
@@ -30,6 +30,8 @@ import {
   Building2,
   Check,
   X,
+  MessageCircle,
+  CheckCheck,
 } from "lucide-react";
 import { DailyReport, MealStatus, MoodType, Student } from "@/types";
 
@@ -37,6 +39,7 @@ export default function VeliPortalPage() {
   const {
     classes,
     students,
+    teachers,
     dailyReports,
     activities,
     media,
@@ -46,6 +49,11 @@ export default function VeliPortalPage() {
     loginStudent,
     logoutStudent,
     getDuesForStudent,
+    messages,
+    sendMessage,
+    markMessagesAsRead,
+    getMessagesForStudent,
+    getUnreadCountForStudent,
   } = useApp();
 
   // Login Form States
@@ -55,8 +63,7 @@ export default function VeliPortalPage() {
 
   // Portal Tab State
   const [activeTab, setActiveTab] = useState<"karne" | "aidat" | "etkinlikler" | "medya" | "menu" | "mesaj">("karne");
-  const [parentMessage, setParentMessage] = useState("");
-  const [parentMessageSent, setParentMessageSent] = useState(false);
+  const [parentChatText, setParentChatText] = useState("");
 
   // Handle Parent Login
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -120,14 +127,29 @@ export default function VeliPortalPage() {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!parentMessage.trim()) return;
-    setParentMessageSent(true);
-    setTimeout(() => {
-      setParentMessage("");
-      setParentMessageSent(false);
-    }, 4000);
+  // Auto mark messages as read when parent is on the chat tab
+  useEffect(() => {
+    if (loggedInStudent && activeTab === "mesaj") {
+      markMessagesAsRead(loggedInStudent.id, "parent");
+    }
+  }, [loggedInStudent, activeTab, messages, markMessagesAsRead]);
+
+  // Handle Send Parent Chat Message
+  const handleSendParentMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!parentChatText.trim() || !loggedInStudent) return;
+
+    sendMessage({
+      studentId: loggedInStudent.id,
+      classId: loggedInStudent.classId,
+      senderType: "parent",
+      senderName: `${loggedInStudent.parentName} (${loggedInStudent.name}'in Velisi)`,
+      senderAvatar: loggedInStudent.avatar,
+      text: parentChatText.trim(),
+    });
+
+    setParentChatText("");
+    markMessagesAsRead(loggedInStudent.id, "parent");
   };
 
   // IF NOT LOGGED IN: E-OKUL LOGIN SCREEN
@@ -286,6 +308,17 @@ export default function VeliPortalPage() {
   );
 
   const studentClass = classes.find((c) => c.id === loggedInStudent.classId);
+  const studentTeacher = teachers?.find((t) => t.classId === loggedInStudent.classId);
+  const studentMessages = getMessagesForStudent(loggedInStudent.id);
+  const unreadMsgCount = getUnreadCountForStudent(loggedInStudent.id, "parent");
+
+  const parentQuickReplies = [
+    "Bugün saat 16:30'da amcası teslim alacak.",
+    "Öğle yemeği sonrası 1 ölçek ateş düşürücü şurup içirilebilir mi?",
+    "Bugün keyfi ve yemek yemesi nasıldı öğretmenim?",
+    "Yedek kıyafetlerini sırt çantasına koydum bilginize.",
+    "İlginiz ve bilgilendirmeniz için çok teşekkürler!",
+  ];
 
   // Filter activities strictly for THIS student's class
   const classActivities = activities.filter((a) => a.classId === loggedInStudent.classId);
@@ -372,11 +405,24 @@ export default function VeliPortalPage() {
                   {loggedInStudent.name} {loggedInStudent.surname}
                 </h2>
 
-                <p className="text-xs sm:text-sm text-sky-100 font-semibold flex items-center justify-center sm:justify-start gap-2">
-                  <span>Sorumlu Öğretmen: <strong>{studentClass?.teacher}</strong></span>
+                <div className="text-xs sm:text-sm text-sky-100 font-semibold flex items-center justify-center sm:justify-start gap-2 flex-wrap pt-0.5">
+                  <span>Sorumlu Öğretmen: <strong>{studentTeacher?.name || studentClass?.teacher}</strong></span>
                   <span>•</span>
                   <span>{studentClass?.room}</span>
-                </p>
+                  <button
+                    onClick={() => {
+                      setActiveTab("mesaj");
+                      markMessagesAsRead(loggedInStudent.id, "parent");
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-black transition-all border border-white/30 shadow-xs cursor-pointer ml-1"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>Öğretmenle Yazış</span>
+                    {unreadMsgCount > 0 && (
+                      <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -468,15 +514,23 @@ export default function VeliPortalPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("mesaj")}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all ${
+            onClick={() => {
+              setActiveTab("mesaj");
+              markMessagesAsRead(loggedInStudent.id, "parent");
+            }}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all relative ${
               activeTab === "mesaj"
                 ? "bg-amber-500 text-white shadow-md shadow-amber-200"
                 : "bg-white text-slate-600 hover:bg-slate-100"
             }`}
           >
-            <Send className="w-4 h-4" />
-            <span>Öğretmene Not İlet</span>
+            <MessageCircle className="w-4 h-4" />
+            <span>Öğretmenle Sohbet (Canlı)</span>
+            {unreadMsgCount > 0 && (
+              <span className="ml-1 px-2 py-0.5 text-[10px] font-black bg-rose-500 text-white rounded-full animate-pulse shadow-sm">
+                {unreadMsgCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -1002,46 +1056,152 @@ export default function VeliPortalPage() {
           </div>
         )}
 
-        {/* TAB 5: Öğretmene Not İlet */}
+        {/* TAB 5: Öğretmenle Canlı Sohbet (Numarasız Güvenli İletişim) */}
         {activeTab === "mesaj" && (
-          <div className="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-100 shadow-sm space-y-6 animate-in fade-in">
-            <div>
-              <h3 className="text-xl font-black text-slate-900">
-                Öğretmene Hızlı Bilgi & Not İletme
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                {studentClass?.teacher} öğretmenimize çocuğunuzun bugünkü durumu (ilaç kullanımı, erken teslim alma veya özel durumlar) hakkında anlık not bırakabilirsiniz.
-              </p>
+          <div className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[620px] max-h-[750px] animate-in fade-in">
+            {/* Chat Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/70 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <img
+                    src={studentTeacher?.avatar || "https://images.unsplash.com/photo-1544717305-2782549b5136?w=150"}
+                    alt={studentTeacher?.name || studentClass?.teacher || "Öğretmen"}
+                    className="w-12 h-12 rounded-2xl object-cover border-2 border-white shadow-sm"
+                  />
+                  <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white absolute -bottom-0.5 -right-0.5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900">
+                      {studentTeacher?.name || studentClass?.teacher || "Sınıf Öğretmeni"}
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      ● Çevrimiçi
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium">
+                    {studentClass?.name} • Sorumlu Sınıf Öğretmeni
+                  </p>
+                </div>
+              </div>
+
+              {/* Privacy Notice Badge */}
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
+                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                <div>
+                  <p className="leading-tight">Gizlilik Korumalı: Numarasız İletişim</p>
+                  <p className="text-[10px] text-amber-700 font-normal">
+                    Telefon numaranız paylaşılmaz, mesajlar doğrudan okul paneli üzerinden yürütülür.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {parentMessageSent ? (
-              <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-                <h4 className="font-black text-slate-900 text-base">Notunuz Öğretmene İletildi!</h4>
-                <p className="text-xs text-slate-600">Öğretmenimiz bildirimi aldı ve dikkatle uygulayacaktır.</p>
+            {/* Messages Stream */}
+            <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-3.5 bg-slate-50/50">
+              {/* Privacy Banner */}
+              <div className="mx-auto max-w-lg p-3 rounded-2xl bg-sky-50 border border-sky-200 text-center space-y-1 text-xs">
+                <p className="font-black text-sky-950 flex items-center justify-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-sky-600" />
+                  <span>Kreş İçi Güvenli Veli - Öğretmen Sohbet Odası</span>
+                </p>
+                <p className="text-[11px] text-sky-800 font-medium leading-relaxed">
+                  {studentTeacher?.name || studentClass?.teacher} öğretmenimize çocuğunuzun bugünkü durumu, teslimat bilgisi veya ilaç hatırlatmalarını buradan anlık olarak iletebilir ve öğretmenden gelen yanıtları takip edebilirsiniz.
+                </p>
               </div>
-            ) : (
-              <form onSubmit={handleSendMessage} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">İletilecek Not / Mesaj:</label>
-                  <textarea
-                    rows={4}
-                    required
-                    value={parentMessage}
-                    onChange={(e) => setParentMessage(e.target.value)}
-                    placeholder="Örn: Bugün saat 16:00'da amcası teslim alacaktır. / Öğle yemeği sonrası antibiyotiği 1 ölçek içirilebilir mi?"
-                    className="w-full p-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  ></textarea>
+
+              {studentMessages.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 space-y-2">
+                  <MessageCircle className="w-12 h-12 mx-auto text-slate-300" />
+                  <p className="text-sm font-bold text-slate-600">Henüz bir mesajlaşma bulunmuyor.</p>
+                  <p className="text-xs text-slate-400">
+                    Öğretmenimizle selamlaşmak veya soru iletmek için aşağıdaki kutudan yazabilirsiniz.
+                  </p>
                 </div>
+              ) : (
+                studentMessages.map((msg) => {
+                  const isParent = msg.senderType === "parent";
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex flex-col ${isParent ? "items-end" : "items-start"}`}
+                    >
+                      <div
+                        className={`max-w-[85%] sm:max-w-md p-3.5 rounded-3xl text-xs shadow-xs space-y-1 ${
+                          isParent
+                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-tr-xs"
+                            : "bg-white border border-slate-200 text-slate-900 rounded-tl-xs"
+                        }`}
+                      >
+                        <p
+                          className={`font-extrabold text-[10px] ${
+                            isParent ? "text-amber-100" : "text-purple-700"
+                          }`}
+                        >
+                          {isParent ? "Siz" : msg.senderName}
+                        </p>
+                        <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap">
+                          {msg.text}
+                        </p>
+                        <div
+                          className={`flex items-center justify-end gap-1 text-[10px] pt-1 ${
+                            isParent ? "text-amber-100" : "text-slate-400"
+                          }`}
+                        >
+                          <span>{msg.timestamp}</span>
+                          {isParent && (
+                            <CheckCheck
+                              className={`w-3.5 h-3.5 ${
+                                msg.read ? "text-emerald-200" : "text-white/60"
+                              }`}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Quick Template Chips */}
+            <div className="p-2.5 bg-white border-t border-slate-100 overflow-x-auto flex items-center gap-2 shrink-0">
+              <span className="text-[10px] font-bold text-slate-400 shrink-0 uppercase tracking-wider pl-2">
+                Hızlı Şablon:
+              </span>
+              {parentQuickReplies.map((tmpl, idx) => (
                 <button
-                  type="submit"
-                  className="w-full py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                  key={idx}
+                  type="button"
+                  onClick={() => setParentChatText(tmpl)}
+                  className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 text-[11px] font-bold whitespace-nowrap transition-colors border border-slate-200"
                 >
-                  <Send className="w-4 h-4" />
-                  <span>Notu Öğretmene Gönder</span>
+                  {tmpl}
                 </button>
-              </form>
-            )}
+              ))}
+            </div>
+
+            {/* Message Input Bar */}
+            <form
+              onSubmit={handleSendParentMessage}
+              className="p-3 sm:p-4 bg-white border-t border-slate-200 flex items-center gap-2"
+            >
+              <input
+                type="text"
+                value={parentChatText}
+                onChange={(e) => setParentChatText(e.target.value)}
+                placeholder={`${studentTeacher?.name || studentClass?.teacher || "Öğretmene"} mesajınızı yazın... (Numaranız gizlidir)`}
+                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              <button
+                type="submit"
+                disabled={!parentChatText.trim()}
+                className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Gönder</span>
+              </button>
+            </form>
           </div>
         )}
       </div>

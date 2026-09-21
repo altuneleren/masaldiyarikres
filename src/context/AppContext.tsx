@@ -13,6 +13,7 @@ import {
   Teacher,
   MonthlyDue,
   DuePaymentStatus,
+  ChatMessage,
 } from "../types";
 import {
   INITIAL_CLASSES,
@@ -25,6 +26,7 @@ import {
   INITIAL_APPLICATIONS,
   INITIAL_TEACHERS,
   INITIAL_DUES,
+  INITIAL_MESSAGES,
 } from "../lib/initialData";
 
 interface AppContextType {
@@ -41,6 +43,21 @@ interface AppContextType {
   teachers: Teacher[];
   monthlyDues: MonthlyDue[];
   loggedInTeacher: Teacher | null;
+  messages: ChatMessage[];
+
+  // Chat Actions
+  sendMessage: (msg: {
+    studentId: string;
+    classId: number;
+    senderType: "teacher" | "parent";
+    senderName: string;
+    senderAvatar?: string;
+    text: string;
+  }) => void;
+  markMessagesAsRead: (studentId: string, readerType: "teacher" | "parent") => void;
+  getMessagesForStudent: (studentId: string) => ChatMessage[];
+  getUnreadCountForStudent: (studentId: string, readerType: "teacher" | "parent") => number;
+  getUnreadCountForClassTeacher: (classId: number) => number;
 
   // Admin Auth
   loginAdmin: (user: string, pass: string) => boolean;
@@ -120,6 +137,7 @@ const STORAGE_KEYS = {
   TEACHERS: "masal_teachers_v1",
   DUES: "masal_dues_v1",
   TEACHER_AUTH: "masal_teacher_auth_v1",
+  MESSAGES: "masal_messages_v1",
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -136,6 +154,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [teachers, setTeachers] = useState<Teacher[]>(INITIAL_TEACHERS);
   const [monthlyDues, setMonthlyDues] = useState<MonthlyDue[]>(INITIAL_DUES);
   const [loggedInTeacher, setLoggedInTeacher] = useState<Teacher | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Load from LocalStorage on mount
@@ -211,6 +230,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setLoggedInTeacher(foundTeacher);
         }
       }
+
+      const storedMessages = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+      if (storedMessages) {
+        setMessages(JSON.parse(storedMessages));
+      } else {
+        setMessages(INITIAL_MESSAGES);
+      }
     } catch (e) {
       console.error("Failed to load data from localStorage", e);
     } finally {
@@ -232,6 +258,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem(STORAGE_KEYS.APPLICATIONS, JSON.stringify(applications));
       localStorage.setItem(STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
       localStorage.setItem(STORAGE_KEYS.DUES, JSON.stringify(monthlyDues));
+      localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
       localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, isAdminLoggedIn ? "true" : "false");
       if (loggedInStudent) {
         localStorage.setItem(STORAGE_KEYS.STUDENT_AUTH, loggedInStudent.id);
@@ -257,6 +284,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     applications,
     teachers,
     monthlyDues,
+    messages,
     isAdminLoggedIn,
     loggedInStudent,
     loggedInTeacher,
@@ -551,6 +579,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMenu(newMenu);
   };
 
+  // Chat Actions
+  const sendMessage = (msg: {
+    studentId: string;
+    classId: number;
+    senderType: "teacher" | "parent";
+    senderName: string;
+    senderAvatar?: string;
+    text: string;
+  }) => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const timestamp = `${hours}:${minutes}`;
+    const date = now.toISOString().split("T")[0];
+
+    const newMessage: ChatMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      studentId: msg.studentId,
+      classId: msg.classId,
+      senderType: msg.senderType,
+      senderName: msg.senderName,
+      senderAvatar: msg.senderAvatar,
+      text: msg.text.trim(),
+      timestamp,
+      date,
+      read: false,
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+  };
+
+  const markMessagesAsRead = (studentId: string, readerType: "teacher" | "parent") => {
+    const targetSenderType = readerType === "teacher" ? "parent" : "teacher";
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.studentId === studentId && m.senderType === targetSenderType && !m.read
+          ? { ...m, read: true }
+          : m
+      )
+    );
+  };
+
+  const getMessagesForStudent = (studentId: string) => {
+    return messages.filter((m) => m.studentId === studentId);
+  };
+
+  const getUnreadCountForStudent = (studentId: string, readerType: "teacher" | "parent") => {
+    const targetSenderType = readerType === "teacher" ? "parent" : "teacher";
+    return messages.filter((m) => m.studentId === studentId && m.senderType === targetSenderType && !m.read).length;
+  };
+
+  const getUnreadCountForClassTeacher = (classId: number) => {
+    return messages.filter((m) => m.classId === classId && m.senderType === "parent" && !m.read).length;
+  };
+
   // Reset Data to Defaults
   const resetAllData = () => {
     setClasses(INITIAL_CLASSES);
@@ -563,6 +646,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setApplications(INITIAL_APPLICATIONS);
     setTeachers(INITIAL_TEACHERS);
     setMonthlyDues(INITIAL_DUES);
+    setMessages(INITIAL_MESSAGES);
     setIsAdminLoggedIn(false);
     setLoggedInStudent(null);
     setLoggedInTeacher(null);
@@ -585,6 +669,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         teachers,
         monthlyDues,
         loggedInTeacher,
+        messages,
+        sendMessage,
+        markMessagesAsRead,
+        getMessagesForStudent,
+        getUnreadCountForStudent,
+        getUnreadCountForClassTeacher,
         loginAdmin,
         logoutAdmin,
         loginStudent,

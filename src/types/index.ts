@@ -141,3 +141,15 @@ export interface MonthlyDue {
   notes?: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  studentId: string; // Hangi öğrencinin velisiyle sohbet edildiği
+  classId: number; // Hangi sınıf
+  senderType: "teacher" | "parent";
+  senderName: string;
+  senderAvatar?: string;
+  text: string;
+  timestamp: string; // örn: "10:45" veya "Bugün 10:45"
+  date: string; // YYYY-MM-DD
+  read: boolean;
+}

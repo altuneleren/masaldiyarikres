@@ -9,6 +9,7 @@ import {
   MealMenuItem,
   Teacher,
   MonthlyDue,
+  ChatMessage,
 } from "../types";
 
 export const INITIAL_CLASSES: ClassGroup[] = [
@@ -934,3 +935,99 @@ const generateInitialDues = (): MonthlyDue[] => {
 };
 
 export const INITIAL_DUES: MonthlyDue[] = generateInitialDues();
+
+export const INITIAL_MESSAGES: ChatMessage[] = [
+  // 1. Sınıf - Ali Demir (stu-101) & Merve Öğretmen
+  {
+    id: "msg-101-1",
+    studentId: "stu-101",
+    classId: 1,
+    senderType: "parent",
+    senderName: "Hakan Demir (Veli)",
+    text: "Merhaba Merve Öğretmenim, Ali sabah kahvaltısını evde biraz az yaptı, meyve saatinde elmasını yerse çok seviniriz.",
+    timestamp: "10:15",
+    date: "2026-09-17",
+    read: true,
+  },
+  {
+    id: "msg-101-2",
+    studentId: "stu-101",
+    classId: 1,
+    senderType: "teacher",
+    senderName: "Merve Güneş (Öğretmen)",
+    text: "Merhaba Hakan Bey, merak etmeyin az önce meyve saatinde arkadaşlarıyla neşeyle elmasını ve cevizini afiyetle yedi 🍏",
+    timestamp: "10:30",
+    date: "2026-09-17",
+    read: true,
+  },
+  {
+    id: "msg-101-3",
+    studentId: "stu-101",
+    classId: 1,
+    senderType: "parent",
+    senderName: "Hakan Demir (Veli)",
+    text: "Harika, çok sevindik! Bugün saat 16:30 gibi okuldan amcası alacak, bilginize sunarım.",
+    timestamp: "11:05",
+    date: "2026-09-17",
+    read: true,
+  },
+  {
+    id: "msg-101-4",
+    studentId: "stu-101",
+    classId: 1,
+    senderType: "teacher",
+    senderName: "Merve Güneş (Öğretmen)",
+    text: "Notumu aldım Hakan Bey, hazırlayacağız. İyi günler dilerim 😊",
+    timestamp: "11:15",
+    date: "2026-09-17",
+    read: true,
+  },
+
+  // 1. Sınıf - Ada Kaya (stu-102) & Merve Öğretmen
+  {
+    id: "msg-102-1",
+    studentId: "stu-102",
+    classId: 1,
+    senderType: "parent",
+    senderName: "Selin Kaya (Veli)",
+    text: "Merve Hanım iyi günler, Ada'nın sırt çantasında pembe hırkası var, bahçe etkinliğine çıkarken giydirirseniz çok sevinirim.",
+    timestamp: "09:40",
+    date: "2026-09-17",
+    read: true,
+  },
+  {
+    id: "msg-102-2",
+    studentId: "stu-102",
+    classId: 1,
+    senderType: "teacher",
+    senderName: "Merve Güneş (Öğretmen)",
+    text: "İyi günler Selin Hanım! Notumu aldım, bahçe saatinde hırkasını giydireceğim, keyfi çok yerinde merak etmeyiniz 🌸",
+    timestamp: "09:55",
+    date: "2026-09-17",
+    read: true,
+  },
+
+  // 2. Sınıf - Can Yıldız (stu-201) & Zeynep Öğretmen
+  {
+    id: "msg-201-1",
+    studentId: "stu-201",
+    classId: 2,
+    senderType: "parent",
+    senderName: "Mehmet Yıldız (Veli)",
+    text: "Zeynep Öğretmenim merhaba, Can parmak boyası dersini dört gözle bekliyordu, boya yapabildi mi?",
+    timestamp: "11:20",
+    date: "2026-09-17",
+    read: true,
+  },
+  {
+    id: "msg-201-2",
+    studentId: "stu-201",
+    classId: 2,
+    senderType: "teacher",
+    senderName: "Zeynep Çelik (Öğretmen)",
+    text: "Merhaba Mehmet Bey! Can harika bir gökkuşağı tablosu yaptı, çıkışta panoda sergilenecek, birlikte görebilirsiniz 🎨",
+    timestamp: "11:45",
+    date: "2026-09-17",
+    read: true,
+  },
+];
