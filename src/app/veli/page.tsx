@@ -393,7 +393,7 @@ export default function VeliPortalPage() {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8 animate-in fade-in">
         {/* Child Identity Card */}
-        <div className="bg-gradient-to-r from-sky-500 via-blue-600 to-purple-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div className="bg-gradient-to-r from-sky-500 via-blue-600 to-purple-600 rounded-3xl p-5 sm:p-8 text-white shadow-xl relative overflow-hidden">
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
               <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden border-4 border-white shadow-2xl shrink-0">
@@ -468,10 +468,10 @@ export default function VeliPortalPage() {
         </div>
 
         {/* Portal Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto scrollbar-none whitespace-nowrap">
           <button
             onClick={() => setActiveTab("karne")}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all shrink-0 cursor-pointer ${
               activeTab === "karne"
                 ? "bg-amber-500 text-white shadow-md shadow-amber-200"
                 : "bg-white text-slate-600 hover:bg-slate-100"
@@ -483,7 +483,7 @@ export default function VeliPortalPage() {
 
           <button
             onClick={() => setActiveTab("aidat")}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all shrink-0 cursor-pointer ${
               activeTab === "aidat"
                 ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
                 : "bg-white text-slate-600 hover:bg-slate-100"
@@ -495,7 +495,7 @@ export default function VeliPortalPage() {
 
           <button
             onClick={() => setActiveTab("etkinlikler")}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all shrink-0 cursor-pointer ${
               activeTab === "etkinlikler"
                 ? "bg-amber-500 text-white shadow-md shadow-amber-200"
                 : "bg-white text-slate-600 hover:bg-slate-100"
@@ -507,7 +507,7 @@ export default function VeliPortalPage() {
 
           <button
             onClick={() => setActiveTab("medya")}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all shrink-0 cursor-pointer ${
               activeTab === "medya"
                 ? "bg-amber-500 text-white shadow-md shadow-amber-200"
                 : "bg-white text-slate-600 hover:bg-slate-100"
@@ -519,7 +519,7 @@ export default function VeliPortalPage() {
 
           <button
             onClick={() => setActiveTab("menu")}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all shrink-0 cursor-pointer ${
               activeTab === "menu"
                 ? "bg-amber-500 text-white shadow-md shadow-amber-200"
                 : "bg-white text-slate-600 hover:bg-slate-100"
@@ -534,16 +534,16 @@ export default function VeliPortalPage() {
               setActiveTab("mesaj");
               markMessagesAsRead(loggedInStudent.id, "parent");
             }}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all relative ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-all relative shrink-0 cursor-pointer ${
               activeTab === "mesaj"
                 ? "bg-amber-500 text-white shadow-md shadow-amber-200"
                 : "bg-white text-slate-600 hover:bg-slate-100"
             }`}
           >
             <MessageCircle className="w-4 h-4" />
-            <span>Öğretmenle Sohbet (Canlı)</span>
+            <span>Öğretmenle Sohbet</span>
             {unreadMsgCount > 0 && (
-              <span className="ml-1 px-2 py-0.5 text-[10px] font-black bg-rose-500 text-white rounded-full animate-pulse shadow-sm">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
                 {unreadMsgCount}
               </span>
             )}

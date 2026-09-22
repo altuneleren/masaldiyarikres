@@ -552,7 +552,7 @@ export default function AdminMedyaPage() {
       {/* Preview Lightbox Modal */}
       {previewItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="relative max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl">
+          <div className="relative max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setPreviewItem(null)}
               className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-black/60 text-white hover:bg-black/80"

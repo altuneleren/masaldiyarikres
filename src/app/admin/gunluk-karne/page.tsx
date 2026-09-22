@@ -215,7 +215,7 @@ export default function AdminGunlukKarnePage() {
       )}
 
       {/* Class Selector Bar */}
-      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2">
+      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-none whitespace-nowrap">
         {classes.map((cls) => {
           const isSelected = cls.id === selectedClassId;
           const count = students.filter((s) => s.classId === cls.id).length;
@@ -249,7 +249,7 @@ export default function AdminGunlukKarnePage() {
         {classStudents.length === 0 ? (
           <p className="text-xs text-slate-500 italic">Bu sınıfta kayıtlı öğrenci bulunmuyor.</p>
         ) : (
-          <div className="flex items-center gap-2.5 overflow-x-auto pb-2">
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none whitespace-nowrap">
             {classStudents.map((stu) => {
               const isSelected = stu.id === selectedStudentId;
 

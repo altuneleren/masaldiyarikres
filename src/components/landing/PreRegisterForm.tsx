@@ -55,7 +55,7 @@ export default function PreRegisterForm() {
   return (
     <section id="on-kayit" className="py-20 bg-gradient-to-b from-amber-50/60 via-white to-amber-50/40 relative">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-2xl border-4 border-amber-200 relative overflow-hidden">
+        <div className="bg-white rounded-3xl p-5 sm:p-12 shadow-2xl border-4 border-amber-200 relative overflow-hidden">
           {/* Top Decorative Cloud Graphic */}
           <div className="text-center space-y-3 mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 text-white text-xs font-bold uppercase tracking-wider shadow-sm">

@@ -384,10 +384,10 @@ export default function OgretmenDashboard() {
 
       {/* Tab Navigation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full">
-        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto scrollbar-none whitespace-nowrap">
           <button
             onClick={() => setActiveTab("karne")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all shrink-0 cursor-pointer ${
               activeTab === "karne"
                 ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
                 : "text-slate-600 hover:bg-slate-100"
@@ -399,7 +399,7 @@ export default function OgretmenDashboard() {
 
           <button
             onClick={() => setActiveTab("etkinlikler")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all shrink-0 cursor-pointer ${
               activeTab === "etkinlikler"
                 ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
                 : "text-slate-600 hover:bg-slate-100"
@@ -411,7 +411,7 @@ export default function OgretmenDashboard() {
 
           <button
             onClick={() => setActiveTab("saglik")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all shrink-0 cursor-pointer ${
               activeTab === "saglik"
                 ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
                 : "text-slate-600 hover:bg-slate-100"
@@ -428,7 +428,7 @@ export default function OgretmenDashboard() {
                 markMessagesAsRead(selectedChatStudent.id, "teacher");
               }
             }}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all relative ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all relative shrink-0 cursor-pointer ${
               activeTab === "mesajlar"
                 ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
                 : "text-slate-600 hover:bg-slate-100"
@@ -445,7 +445,7 @@ export default function OgretmenDashboard() {
 
           <button
             onClick={() => setActiveTab("maas")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 ${
               activeTab === "maas"
                 ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
                 : "text-slate-600 hover:bg-slate-100"
@@ -810,7 +810,7 @@ export default function OgretmenDashboard() {
 
         {/* TAB 4: VELİ SOHBETLERİ & MESAJLAŞMA */}
         {activeTab === "mesajlar" && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row min-h-[600px] max-h-[750px] animate-in fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row min-h-[500px] max-h-[85vh] md:min-h-[600px] md:max-h-[750px] animate-in fade-in">
             {/* Left Column: Student & Parent List */}
             <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col bg-slate-50/50">
               <div className="p-4 border-b border-slate-200 bg-white">

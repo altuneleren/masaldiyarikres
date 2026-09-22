@@ -52,7 +52,7 @@ export default function AdminBasvurularPage() {
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none whitespace-nowrap">
           {["all", "beklemede", "arandi", "onaylandi", "reddedildi"].map((st) => (
             <button
               key={st}
@@ -93,7 +93,7 @@ export default function AdminBasvurularPage() {
             return (
               <div
                 key={app.id}
-                className="bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                className="bg-white p-5 sm:p-6 rounded-3xl border-2 border-slate-100 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">

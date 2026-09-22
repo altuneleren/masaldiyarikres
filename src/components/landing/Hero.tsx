@@ -95,31 +95,31 @@ export default function Hero() {
               </div>
 
               {/* Floating Badge 1: 1-6. Sınıflar */}
-              <div className="absolute -top-6 -left-6 bg-white p-3.5 rounded-2xl shadow-xl border-2 border-amber-200 flex items-center gap-3 animate-float-slow">
-                <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-xl">
+              <div className="absolute -top-3 -left-2 sm:-top-6 sm:-left-6 bg-white p-2.5 sm:p-3.5 rounded-2xl shadow-xl border-2 border-amber-200 flex items-center gap-2.5 sm:gap-3 animate-float-slow">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-lg sm:text-xl">
                   6
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-500">Ayrı Yaş Grubu</p>
-                  <p className="text-sm font-extrabold text-slate-900">1 - 6. Sınıflar</p>
+                  <p className="text-[10px] sm:text-xs font-bold text-slate-500">Ayrı Yaş Grubu</p>
+                  <p className="text-xs sm:text-sm font-extrabold text-slate-900">1 - 6. Sınıflar</p>
                 </div>
               </div>
 
               {/* Floating Badge 2: Parent Satisfaction */}
-              <div className="absolute -bottom-6 -right-4 bg-white p-3.5 rounded-2xl shadow-xl border-2 border-pink-200 flex items-center gap-3 animate-float-reverse">
-                <div className="w-11 h-11 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
-                  <Star className="w-6 h-6 fill-pink-500 text-pink-500" />
+              <div className="absolute -bottom-3 -right-2 sm:-bottom-6 sm:-right-4 bg-white p-2.5 sm:p-3.5 rounded-2xl shadow-xl border-2 border-pink-200 flex items-center gap-2.5 sm:gap-3 animate-float-reverse">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                  <Star className="w-5 h-5 sm:w-6 sm:h-6 fill-pink-500 text-pink-500" />
                 </div>
                 <div>
-                  <div className="flex items-center text-amber-400 text-xs">
+                  <div className="flex items-center text-amber-400 text-[10px] sm:text-xs">
                     ★★★★★ <span className="text-slate-800 font-extrabold ml-1">5.0</span>
                   </div>
-                  <p className="text-xs font-extrabold text-slate-800">%100 Veli Memnuniyeti</p>
+                  <p className="text-[10px] sm:text-xs font-extrabold text-slate-800">%100 Veli Memnuniyeti</p>
                 </div>
               </div>
 
               {/* Floating Badge 3: Online Veli Takip */}
-              <div className="absolute -bottom-8 left-6 bg-gradient-to-r from-sky-500 to-blue-600 text-white px-3.5 py-2 rounded-xl shadow-lg flex items-center gap-2 text-xs font-bold">
+              <div className="hidden sm:flex absolute -bottom-8 left-6 bg-gradient-to-r from-sky-500 to-blue-600 text-white px-3.5 py-2 rounded-xl shadow-lg items-center gap-2 text-xs font-bold">
                 <Users className="w-4 h-4" />
                 <span>Günlük Yemek & Uyku Bildirimi</span>
               </div>

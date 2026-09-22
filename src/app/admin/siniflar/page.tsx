@@ -185,7 +185,7 @@ export default function AdminSiniflarPage() {
       </div>
 
       {/* Class Selector Bar (1 to 6) */}
-      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2">
+      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-none whitespace-nowrap">
         {classes.map((cls) => {
           const count = students.filter((s) => s.classId === cls.id).length;
           const isActive = cls.id === activeClassId;
@@ -603,7 +603,7 @@ export default function AdminSiniflarPage() {
       {/* Modal: Yeni Etkinlik Ekle */}
       {showActivityModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowActivityModal(false)}
               className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"

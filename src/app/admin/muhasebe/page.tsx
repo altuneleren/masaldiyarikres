@@ -773,10 +773,10 @@ export default function AdminMuhasebePage() {
       </div>
 
       {/* Main Tab Switcher: 4 Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto scrollbar-none whitespace-nowrap">
         <button
           onClick={() => setAccountingTab("ozet")}
-          className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer ${
+          className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer shrink-0 ${
             accountingTab === "ozet"
               ? "bg-slate-900 text-white shadow-md shadow-slate-900/20"
               : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -788,7 +788,7 @@ export default function AdminMuhasebePage() {
 
         <button
           onClick={() => setAccountingTab("giderler")}
-          className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer relative ${
+          className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer relative shrink-0 ${
             accountingTab === "giderler"
               ? "bg-rose-600 text-white shadow-md shadow-rose-500/20"
               : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -803,7 +803,7 @@ export default function AdminMuhasebePage() {
 
         <button
           onClick={() => setAccountingTab("aidat")}
-          className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer ${
+          className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer shrink-0 ${
             accountingTab === "aidat"
               ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
               : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -815,7 +815,7 @@ export default function AdminMuhasebePage() {
 
         <button
           onClick={() => setAccountingTab("maas")}
-          className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer relative ${
+          className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer relative shrink-0 ${
             accountingTab === "maas"
               ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
               : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -1693,7 +1693,7 @@ export default function AdminMuhasebePage() {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-900 text-white font-bold">
-                <th className="p-3.5 sticky left-0 z-20 bg-slate-900 min-w-[200px]">
+                <th className="p-3.5 sticky left-0 z-20 bg-slate-900 min-w-[140px] sm:min-w-[200px]">
                   Öğrenci & Sınıf Bilgisi
                 </th>
                 {currentAcademicMonths.map((month) => (
@@ -1704,7 +1704,7 @@ export default function AdminMuhasebePage() {
                     </span>
                   </th>
                 ))}
-                <th className="p-3.5 text-center min-w-[110px] sticky right-0 z-20 bg-slate-900">
+                <th className="p-3.5 text-center min-w-[110px] md:sticky md:right-0 md:z-20 bg-slate-900">
                   Toplam Ödenen
                 </th>
               </tr>
@@ -1732,7 +1732,7 @@ export default function AdminMuhasebePage() {
                   return (
                     <tr key={student.id} className="hover:bg-slate-50/80 transition-colors">
                       {/* Student Info (Sticky Left) */}
-                      <td className="p-3 sticky left-0 z-10 bg-white shadow-sm border-r border-slate-100">
+                      <td className="p-3 sticky left-0 z-10 bg-white shadow-sm border-r border-slate-100 min-w-[140px] sm:min-w-[200px]">
                         <div className="flex items-center gap-2.5">
                           <img
                             src={student.avatar}
@@ -1795,8 +1795,8 @@ export default function AdminMuhasebePage() {
                         );
                       })}
 
-                      {/* Summary (Sticky Right) */}
-                      <td className="p-3 text-center sticky right-0 z-10 bg-white shadow-sm border-l border-slate-100">
+                      {/* Summary (Sticky Right on md+) */}
+                      <td className="p-3 text-center md:sticky md:right-0 md:z-10 bg-white shadow-sm border-l border-slate-100 min-w-[100px]">
                         <div className="flex flex-col items-center">
                           <span className="font-black text-slate-900 text-xs">
                             {paidAmount.toLocaleString("tr-TR")} ₺
@@ -2010,7 +2010,7 @@ export default function AdminMuhasebePage() {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-900 text-white font-bold">
-                    <th className="p-3.5 sticky left-0 z-20 bg-slate-900 min-w-[220px]">
+                    <th className="p-3.5 sticky left-0 z-20 bg-slate-900 min-w-[150px] sm:min-w-[220px]">
                       Öğretmen & Sorumlu Sınıf
                     </th>
                     {currentAcademicMonths.map((month) => (
@@ -2021,7 +2021,7 @@ export default function AdminMuhasebePage() {
                         </span>
                       </th>
                     ))}
-                    <th className="p-3.5 text-center min-w-[120px] sticky right-0 z-20 bg-slate-900">
+                    <th className="p-3.5 text-center min-w-[120px] md:sticky md:right-0 md:z-20 bg-slate-900">
                       Toplam Ödenen
                     </th>
                   </tr>
@@ -2049,7 +2049,7 @@ export default function AdminMuhasebePage() {
                       return (
                         <tr key={teacher.id} className="hover:bg-slate-50/80 transition-colors">
                           {/* Teacher Info (Sticky Left) */}
-                          <td className="p-3 sticky left-0 z-10 bg-white shadow-sm border-r border-slate-100">
+                          <td className="p-3 sticky left-0 z-10 bg-white shadow-sm border-r border-slate-100 min-w-[150px] sm:min-w-[220px]">
                             <div className="flex items-center gap-2.5">
                               <img
                                 src={teacher.avatar}
@@ -2117,8 +2117,8 @@ export default function AdminMuhasebePage() {
                             );
                           })}
 
-                          {/* Total Paid (Sticky Right) */}
-                          <td className="p-3 text-center sticky right-0 z-10 bg-white shadow-sm border-l border-slate-100">
+                          {/* Total Paid (Sticky Right on md+) */}
+                          <td className="p-3 text-center md:sticky md:right-0 md:z-10 bg-white shadow-sm border-l border-slate-100 min-w-[110px]">
                             <p className="font-mono font-black text-emerald-700 text-xs">
                               {totalPaidAmount.toLocaleString("tr-TR")} ₺
                             </p>
@@ -2140,7 +2140,7 @@ export default function AdminMuhasebePage() {
       {/* Edit Payment Modal */}
       {editingDue && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-2 border-emerald-100 space-y-5 animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border-2 border-emerald-100 space-y-5 animate-in fade-in zoom-in duration-200 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
@@ -2167,7 +2167,7 @@ export default function AdminMuhasebePage() {
                 <label className="block text-slate-700 font-bold mb-1.5">
                   Aidat Ödeme Durumu *
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setFormStatus("odendi")}
@@ -2310,7 +2310,7 @@ export default function AdminMuhasebePage() {
       {/* Teacher Salary Edit Modal */}
       {editingSalary && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 border border-slate-200 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 border border-slate-200 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
@@ -2341,7 +2341,7 @@ export default function AdminMuhasebePage() {
                 <label className="block text-slate-700 font-bold mb-1.5">
                   Maaş Ödeme Durumu
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setSalFormStatus("odendi")}
@@ -2371,7 +2371,7 @@ export default function AdminMuhasebePage() {
               </div>
 
               {/* Amount, Bonus & Deduction */}
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">
                     Net Maaş (₺)
@@ -2892,7 +2892,7 @@ export default function AdminMuhasebePage() {
       {/* New Academic Year Modal */}
       {showAddYearModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 overflow-hidden max-h-[92vh] overflow-y-auto">
             <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-700 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">

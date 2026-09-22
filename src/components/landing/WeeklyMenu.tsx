@@ -28,12 +28,12 @@ export default function WeeklyMenu() {
         </div>
 
         {/* Day selection tabs */}
-        <div className="flex items-center justify-center gap-2 sm:gap-4 overflow-x-auto pb-4 mb-8">
+        <div className="flex items-center justify-start sm:justify-center gap-2 sm:gap-4 overflow-x-auto pb-4 mb-8 scrollbar-none px-2">
           {menu.map((item, idx) => (
             <button
               key={idx}
               onClick={() => setActiveDayIndex(idx)}
-              className={`px-5 py-3 rounded-2xl font-black text-sm transition-all whitespace-nowrap ${
+              className={`px-5 py-3 rounded-2xl font-black text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeDayIndex === idx
                   ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200 scale-105"
                   : "bg-white text-slate-700 hover:bg-emerald-50 border border-slate-200"
